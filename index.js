@@ -16,14 +16,11 @@
         // Сюда потом добавятся новые темы по индексам: 1, 2, 3...
     ];
 
-    // Функция проверки: какая тема сейчас включена
     function getActiveThemeIndex() {
         const savedTheme = localStorage.getItem('selected_theme') || localStorage.getItem('theme') || '';
         const customName = localStorage.getItem('current_theme_name') || '';
 
         for (let i = 0; i < themesRegistry.length; i++) {
-            // Здесь мы проверяем, выбрана ли нужная тема
-            // (в будущем сюда можно будет добавить точное сравнение по имени файла темы)
             if (savedTheme.toLowerCase().includes('4ernysh') || 
                 customName.toLowerCase().includes('4ernysh') ||
                 document.querySelector('.mes') !== null) {
@@ -34,43 +31,61 @@
     }
 
     /* ==========================================
-       СОЗДАНИЕ ПАНЕЛИ УПРАВЛЕНИЯ В РАСШИРЕНИЯХ
+       СОЗДАНИЕ ВЫПАДАЮЩЕГО БЛОКА (АККОРДЕОНА)
+       В СТИЛЕ РОДНЫХ РАСШИРЕНИЙ СИЛЛИ ТАВЕРНЫ
        ========================================== */
     function createExtensionUI() {
-        // Проверяем, не создана ли панель уже
         if (document.getElementById('ernysh_theme_manager_settings')) return;
 
-        // Ищем контейнер настроек расширений в Таверне
         const extensionsSettings = document.getElementById('extensions_settings');
         if (!extensionsSettings) return;
 
-        // Создаем наш блок настроек расширения
+        // Создаем контейнер в стиле родных элементов расширений
         const panel = document.createElement('div');
         panel.id = 'ernysh_theme_manager_settings';
-        panel.style.cssText = 'border: 2px solid #a10000; background: #0b0204; padding: 12px; margin-bottom: 10px; font-family: monospace; color: #e7abb5;';
+        panel.className = 'inline-drawer'; // Родной класс Таверны для блоков
+        panel.style.cssText = 'border: 1px solid #a10000; background: #0b0204; margin-bottom: 10px; border-radius: 4px; overflow: hidden;';
         
         panel.innerHTML = `
-            <h3 style="margin: 0 0 8px 0; color: #e7abb5; font-size: 14px;">[ 4ernysh Theme Manager ]</h3>
-            <p style="margin: 0 0 8px 0; font-size: 11px; color: #c25252;">Управление киберпанк-темами и скриптами.</p>
-            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
-                <button id="ernysh_check_btn" style="background: #2b080c; color: #e7abb5; border: 1px solid #a10000; padding: 4px 8px; cursor: pointer; font-family: monospace;">Проверить статус темы</button>
-                <span id="ernysh_status_label" style="font-size: 11px;">Статус: не проверено</span>
+            <div id="ernysh_drawer_header" class="inline-drawer-toggle inline-drawer-header" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #130306; cursor: pointer; border-bottom: 1px solid #a10000; font-family: monospace; color: #e7abb5;">
+                <span><b>[ 4ernysh Theme Manager ]</b></span>
+                <i class="fa-solid fa-chevron-down inline-drawer-icon" style="transition: transform 0.2s;"></i>
+            </div>
+            <div id="ernysh_drawer_content" class="inline-drawer-content" style="display: none; padding: 12px; font-family: monospace; color: #e7abb5;">
+                <p style="margin: 0 0 10px 0; font-size: 11px; color: #c25252;">Управление киберпанк-темами и скриптами.</p>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button id="ernysh_check_btn" style="background: #2b080c; color: #e7abb5; border: 1px solid #a10000; padding: 6px 12px; cursor: pointer; font-family: monospace; border-radius: 3px;">Проверить статус</button>
+                    <span id="ernysh_status_label" style="font-size: 11px;">Статус: не проверено</span>
+                </div>
             </div>
         `;
 
         extensionsSettings.appendChild(panel);
 
-        // Вешаем логику на кнопку проверки статуса
-        document.getElementById('ernysh_check_btn').addEventListener('click', () => {
+        // Логика сворачивания/разворачивания по клику на заголовок
+        const header = document.getElementById('ernysh_drawer_header');
+        const content = document.getElementById('ernysh_drawer_content');
+        const icon = header.querySelector('.inline-drawer-icon');
+
+        header.addEventListener('click', () => {
+            const isHidden = content.style.display === 'none';
+            content.style.display = isHidden ? 'block' : 'none';
+            icon.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+            header.style.borderBottom = isHidden ? '1px solid #a10000' : 'none';
+        });
+
+        // Логика кнопки проверки статуса
+        document.getElementById('ernysh_check_btn').addEventListener('click', (e) => {
+            e.stopPropagation(); // Чтобы клик не сворачивал блок
             const activeIdx = getActiveThemeIndex();
             const statusLabel = document.getElementById('ernysh_status_label');
 
             if (activeIdx !== -1 && themesRegistry[activeIdx]) {
-                statusLabel.innerText = `Статус: АКТИВНА (${themesRegistry[activeIdx].name}) [Индекс: ${activeIdx}]`;
-                statusLabel.style.color = '#52c252'; // Зеленый
+                statusLabel.innerText = `АКТИВНА (${themesRegistry[activeIdx].name}) [Индекс: ${activeIdx}]`;
+                statusLabel.style.color = '#52c252';
             } else {
-                statusLabel.innerText = 'Статус: НЕ ВКЛЮЧЕНА (Тема 4ernysh не найдена)';
-                statusLabel.style.color = '#c25252'; // Красный
+                statusLabel.innerText = 'НЕ ВКЛЮЧЕНА (Тема 4ernysh не найдена)';
+                statusLabel.style.color = '#c25252';
             }
         });
     }
@@ -135,17 +150,11 @@
         document.querySelectorAll('.mes').forEach(setupMesActions);
     }
 
-    // ==========================================
-    // ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ
-    // ==========================================
-    // Создаем UI в панели расширений Таверны
-    setTimeout(createExtensionUI, 1500); // Небольшая задержка, чтобы меню расширений успело отрисоваться
+    // Инициализация
+    setTimeout(createExtensionUI, 1500);
 
-    // Авто-запуск логики темы, если она активна
     const activeIndex = getActiveThemeIndex();
     if (activeIndex !== -1 && themesRegistry[activeIndex]) {
         themesRegistry[activeIndex].apply();
-    } else {
-        console.log('[4ernysh Manager] No matching 4ernysh theme active. Script skipped.');
     }
 })();
