@@ -17,21 +17,21 @@
 
     // Честная проверка: активна ли тема (без ложных срабатываний по сообщениям)
     function getActiveThemeIndex() {
-        const savedTheme = localStorage.getItem('selected_theme') || localStorage.getItem('theme') || '';
-        const customName = localStorage.getItem('current_theme_name') || '';
-        
-        // Проверяем, подключен ли файл стилей с именем 4ernysh в шапке сайта
-        const hasThemeStyle = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
-            .some(link => link.href.toLowerCase().includes('4ernysh'));
+        const themeSelect = document.getElementById('themes');
+        if (!themeSelect) return -1;
+
+        // Получаем текст выбранной опции (например, "4ernysh Red cybercore theme")
+        const selectedOption = themeSelect.options[themeSelect.selectedIndex];
+        const themeText = selectedOption ? selectedOption.text.toLowerCase() : '';
+        const themeVal = themeSelect.value.toLowerCase();
 
         for (let i = 0; i < themesRegistry.length; i++) {
-            const themeId = themesRegistry[i].id;
+            const themeId = themesRegistry[i].id.toLowerCase();
             const themeName = themesRegistry[i].name.toLowerCase();
 
-            if (savedTheme.toLowerCase().includes('4ernysh') || 
-                savedTheme.toLowerCase().includes(themeId) ||
-                customName.toLowerCase().includes('4ernysh') ||
-                hasThemeStyle) {
+            // Если в тексте или значении селекта есть наше имя — тема активна!
+            if (themeText.includes('4ernysh') || themeText.includes(themeId) ||
+                themeVal.includes('4ernysh') || themeVal.includes(themeId)) {
                 return i;
             }
         }
