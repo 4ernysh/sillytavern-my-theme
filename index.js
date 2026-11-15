@@ -9,13 +9,11 @@
             id: 'red_cybercore',
             name: '4ernysh Red cybercore theme',
             apply: function() {
-                console.log('[4ernysh Manager] Applying theme: Red cybercore');
                 initRedCybercoreLogic();
             }
         }
     ];
 
-    // Проверка темы через селект #themes
     function getActiveThemeIndex() {
         const themeSelect = document.getElementById('themes');
         if (!themeSelect) return -1;
@@ -32,8 +30,6 @@
                 return i;
             }
         }
-        
-        // Если селект есть, но выбрана другая тема — возвращаем -1
         return -1;
     }
 
@@ -59,7 +55,7 @@
             <div class="inline-drawer-content" style="display: none;">
                 <p style="margin: 0 0 10px 0; font-size: 11px;">Управление темами и скриптами от черныша :3</p>
                 <div style="display: flex; gap: 8px; align-items: center;">
-                    <button id="ernysh_check_btn" class="menu_button"> Проверить статус!</button>
+                    <button id="ernysh_check_btn" class="menu_button">Проверить статус!</button>
                     <span id="ernysh_status_label" style="font-size: 11px;">Статус: не проверено D:</span>
                 </div>
             </div>
@@ -75,6 +71,12 @@
             if (activeIdx !== -1 && themesRegistry[activeIdx]) {
                 statusLabel.innerText = `АКТИВНА (${themesRegistry[activeIdx].name}) [Индекс: ${activeIdx}]`;
                 statusLabel.style.color = '#52c252';
+
+                if (typeof window.ernyshForceRescan === 'function') {
+                    window.ernyshForceRescan();
+                } else {
+                    themesRegistry[activeIdx].apply();
+                }
             } else {
                 statusLabel.innerText = 'НЕ ВКЛЮЧЕНА (Выбрана другая тема)';
                 statusLabel.style.color = '#c25252';
@@ -129,6 +131,17 @@
             actionsBar.dataset.assembled = 'true';
         }
 
+        window.ernyshForceRescan = function() {
+            console.log('[Red Cybercore] Force-rescan triggered!');
+            document.querySelectorAll('.mes').forEach(messageElement => {
+                const actionsBar = messageElement.querySelector('.mes_actions');
+                if (actionsBar) {
+                    delete actionsBar.dataset.assembled;
+                }
+                setupMesActions(messageElement);
+            });
+        };
+
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 mutation.addedNodes.forEach((node) => {
@@ -141,7 +154,7 @@
         });
 
         observer.observe(document.body, { childList: true, subtree: true });
-        document.querySelectorAll('.mes').forEach(setupMesActions);
+        window.ernyshForceRescan();
     }
 
     // Авто-инициализация UI панели расширений
@@ -156,24 +169,22 @@
 
     setTimeout(createExtensionUI, 1000);
 
-    // Умный инициализатор темы: ждем, пока селект #themes появится в DOM, и проверяем
+    // Инициализатор темы при появлении #themes
     const themeCheckObserver = new MutationObserver((mutations, obs) => {
         const activeIdx = getActiveThemeIndex();
         if (activeIdx !== -1 && themesRegistry[activeIdx]) {
             themesRegistry[activeIdx].apply();
-            obs.disconnect(); // Нашли и применили — отключаем наблюдатель
+            obs.disconnect();
         }
     });
     themeCheckObserver.observe(document.body, { childList: true, subtree: true });
 
-    // Пробуем проверить сразу на случай, если селект уже загружен
     const immediateIdx = getActiveThemeIndex();
     if (immediateIdx !== -1 && themesRegistry[immediateIdx]) {
         themesRegistry[immediateIdx].apply();
         themeCheckObserver.disconnect();
     }
 
-    // Также следим за изменением темы прямо в селекте на лету
     document.addEventListener('change', (e) => {
         if (e.target && e.target.id === 'themes') {
             const activeIdx = getActiveThemeIndex();
@@ -183,5 +194,3 @@
         }
     });
 })();
-    }
-})(); // <-- ВОТ ТУТ ДОЛЖНЫ БЫТЬ СКОБКИ () В КОНЦЕ!
