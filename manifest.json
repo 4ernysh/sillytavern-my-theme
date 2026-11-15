@@ -1,0 +1,8 @@
+{
+  "display_name": "sillytavern 4ernysh themes",
+  "name": "sillytavern-4ernysh-themes",
+  "version": "1.0.0",
+  "author": "4ernysh",
+  "description": "Custom themes for SillyTavern",
+  "js": "index.js"
+}
