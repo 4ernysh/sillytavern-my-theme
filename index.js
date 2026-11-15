@@ -30,23 +30,24 @@
     }
 
     /* ==========================================
-       НАТИВНЫЙ ИНТЕРФЕЙС РАСШИРЕНИЯ (АККОРДЕОН)
+       ИНТЕРФЕЙС РАСШИРЕНИЯ (АККОРДЕОН)
        ========================================== */
     function createExtensionUI() {
         if (document.getElementById('ernysh_theme_manager_settings')) return;
 
-        const extensionsSettings = document.getElementById('extensions_settings');
+        // Ищем блок расширений в Таверне
+        const extensionsSettings = document.getElementById('extensions_settings') || document.querySelector('.extensions_settings');
         if (!extensionsSettings) return;
 
-        // Используем стандартные системные классы Таверны без ручных цветов
         const panel = document.createElement('div');
         panel.id = 'ernysh_theme_manager_settings';
         panel.className = 'inline-drawer';
+        panel.style.cssText = 'margin-bottom: 10px; border-radius: 4px; overflow: hidden;';
         
         panel.innerHTML = `
-            <div id="ernysh_drawer_header" class="inline-drawer-toggle inline-drawer-header">
-                <b>[ 4ernysh Theme Manager ]</b>
-                <i class="fa-solid fa-chevron-down inline-drawer-icon"></i>
+            <div id="ernysh_drawer_header" class="inline-drawer-toggle inline-drawer-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                <span><b>[ 4ernysh Theme Manager ]</b></span>
+                <i class="fa-solid fa-chevron-down inline-drawer-icon" style="transition: transform 0.2s;"></i>
             </div>
             <div id="ernysh_drawer_content" class="inline-drawer-content" style="display: none;">
                 <p style="margin: 0 0 10px 0; font-size: 11px;">Управление киберпанк-темами и скриптами.</p>
@@ -59,19 +60,18 @@
 
         extensionsSettings.appendChild(panel);
 
-        // Системная логика сворачивания/разворачивания по клику на заголовок
         const header = document.getElementById('ernysh_drawer_header');
         const content = document.getElementById('ernysh_drawer_content');
+        const icon = header.querySelector('.inline-drawer-icon');
 
         header.addEventListener('click', () => {
             const isHidden = content.style.display === 'none';
             content.style.display = isHidden ? 'block' : 'none';
-            header.classList.toggle('open', isHidden);
+            icon.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
         });
 
-        // Кнопка проверки статуса
         document.getElementById('ernysh_check_btn').addEventListener('click', (e) => {
-            e.stopPropagation(); // Чтобы клик по кнопке не сворачивал блок
+            e.stopPropagation();
             const activeIdx = getActiveThemeIndex();
             const statusLabel = document.getElementById('ernysh_status_label');
 
@@ -145,12 +145,21 @@
         document.querySelectorAll('.mes').forEach(setupMesActions);
     }
 
-    // Инициализация
-    setTimeout(createExtensionUI, 1500);
+    // Проверяем появление панели расширений через MutationObserver, чтобы не пропустить момент загрузки DOM
+    const uiObserver = new MutationObserver((mutations, obs) => {
+        const extensionsSettings = document.getElementById('extensions_settings') || document.querySelector('.extensions_settings');
+        if (extensionsSettings) {
+            createExtensionUI();
+            obs.disconnect(); // Как только нашли и отрисовали — отключаем наблюдатель
+        }
+    });
+    uiObserver.observe(document.body, { childList: true, subtree: true });
+
+    // Также пробуем создать сразу на случай, если DOM уже загружен
+    setTimeout(createExtensionUI, 1000);
 
     const activeIndex = getActiveThemeIndex();
     if (activeIndex !== -1 && themesRegistry[activeIndex]) {
         themesRegistry[activeIndex].apply();
     }
-})();
 })();
