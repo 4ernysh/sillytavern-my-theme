@@ -102,6 +102,19 @@
             const btnPrev = messageElement.querySelector('.mes_stmb_start');
             const btnNext = messageElement.querySelector('.mes_stmb_end');
 
+            // --- ДЕБАГ ЛОГИ ДЛЯ ПРОВЕРКИ КНОПОК ---
+            console.log('[Red Cybercore Debug] === АНАЛИЗ ПАНЕЛИ СООБЩЕНИЯ ===');
+            console.log('[Red Cybercore Debug] actionsBar HTML:', actionsBar.innerHTML);
+            console.log('[Red Cybercore Debug] btnHide (.mes_hide):', !!btnHide, btnHide);
+            console.log('[Red Cybercore Debug] btnCheck (.mes_create_bookmark):', !!btnCheck, btnCheck);
+            console.log('[Red Cybercore Debug] btnTree (.mes_create_branch):', !!btnTree, btnTree);
+            console.log('[Red Cybercore Debug] btnDelete (.mes_edit_delete):', !!btnDelete, btnDelete);
+            console.log('[Red Cybercore Debug] btnEdit (.mes_edit):', !!btnEdit, btnEdit);
+            console.log('[Red Cybercore Debug] btnPrev (.mes_stmb_start):', !!btnPrev, btnPrev);
+            console.log('[Red Cybercore Debug] btnNext (.mes_stmb_end):', !!btnNext, btnNext);
+            console.log('[Red Cybercore Debug] ================================');
+            // ------------------------------------
+
             const buttonsConfig = [
                 { el: btnHide, text: 'hide' },
                 { el: btnCheck, text: 'check' },
