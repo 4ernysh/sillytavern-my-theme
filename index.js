@@ -88,9 +88,9 @@
        ЛОГИКА ТЕМЫ ИНДЕКС 0 (Red cybercore)
        ========================================== */
     function initRedCybercoreLogic() {
-        console.log('[Red Cybercore] Initializing unified mes_buttons assembler...');
+        console.log('[Red Cybercore] Initializing safe unified mes_buttons assembler...');
 
-        // Стили для красивого отображения терминальной панели
+        // Стили для терминальной панели и скрытия старых мусорных оберток
         if (!document.getElementById('ernysh_cybercore_styles')) {
             const style = document.createElement('style');
             style.id = 'ernysh_cybercore_styles';
@@ -109,7 +109,7 @@
                     pointer-events: auto !important;
                     opacity: 1 !important;
                 }
-                /* Прячем старые выпадающие меню с троеточием, чтобы не мешались */
+                /* Прячем старое меню с троеточием */
                 .ch_name .extraMesButtons,
                 .ch_name .extra_buttons,
                 .ch_name .mes_extra_buttons_wrapper {
@@ -120,36 +120,36 @@
         }
 
         function setupMesActions(messageElement) {
-            if (messageElement.dataset.assembled === 'true') return;
-
             const chName = messageElement.querySelector('.ch_name');
             if (!chName) return;
 
-            // Находим главную панель кнопок (mes_buttons)
-            let mesButtons = chName.querySelector('.mes_buttons');
+            const mesButtons = chName.querySelector('.mes_buttons');
             if (!mesButtons) return;
 
-            // Создаем или очищаем наш терминальный контейнер внутри mes_buttons
             let terminalBar = mesButtons.querySelector('.ernysh_terminal_bar');
             if (!terminalBar) {
                 terminalBar = document.createElement('div');
                 terminalBar.className = 'ernysh_terminal_bar';
                 mesButtons.appendChild(terminalBar);
-            } else {
-                terminalBar.innerHTML = '';
             }
 
-            // Собираем нужные элементы из обоих путей:
-            // 1. Из mes_buttons / extraMesButtons (копирование, бранчи и т.д.)
-            // 2. Из mes_edit_buttons (удаление, редактирование)
-            const btnHide = messageElement.querySelector('.mes_hide, .mes_block');
-            const btnCheck = messageElement.querySelector('.mes_create_bookmark');
-            const btnTree = messageElement.querySelector('.mes_create_branch');
-            const btnCopy = messageElement.querySelector('.mes_copy');
-            const btnDelete = messageElement.querySelector('.mes_edit_delete, .mes_del');
-            const btnEdit = messageElement.querySelector('.mes_edit');
-            const btnPrev = messageElement.querySelector('.mes_stmb_start');
-            const btnNext = messageElement.querySelector('.mes_stmb_end');
+            // Безопасный поиск кнопок, которые еще не перенесены в терминал
+            const findButton = (selector) => {
+                const els = messageElement.querySelectorAll(selector);
+                for (let el of els) {
+                    if (!terminalBar.contains(el)) return el;
+                }
+                return null;
+            };
+
+            const btnHide = findButton('.mes_hide, .mes_block');
+            const btnCheck = findButton('.mes_create_bookmark');
+            const btnTree = findButton('.mes_create_branch');
+            const btnCopy = findButton('.mes_copy');
+            const btnDelete = findButton('.mes_edit_delete, .mes_del');
+            const btnEdit = findButton('.mes_edit');
+            const btnPrev = findButton('.mes_stmb_start');
+            const btnNext = findButton('.mes_stmb_end');
 
             const buttonsConfig = [
                 { el: btnHide, text: 'hide' },
@@ -163,8 +163,7 @@
             ];
 
             buttonsConfig.forEach(cfg => {
-                if (cfg.el) {
-                    // Убираем старый текстовый спан, если он уже был
+                if (cfg.el && !terminalBar.contains(cfg.el)) {
                     const oldText = cfg.el.querySelector('.terminal-btn-text');
                     if (oldText) oldText.remove();
 
@@ -174,13 +173,12 @@
                     span.innerText = cfg.text;
                     cfg.el.appendChild(span);
 
-                    // Специальная обработка для удаления, чтобы оно срабатывало мгновенно без багов редактирования
+                    // Корректный обработчик для мгновенного удаления через STscript /delete
                     if (cfg.isDelete) {
                         cfg.el.onclick = (e) => {
                             e.stopPropagation();
-                            // Вызываем оригинальный метод удаления через SlashCommand или поиск по ID
                             const mesId = messageElement.getAttribute('mesid');
-                            if (mesId !== null && typeof SlashCommandParser !== 'undefined') {
+                            if (mesId !== null && typeof SlashCommandParser !== 'undefined' && SlashCommandParser.parse) {
                                 SlashCommandParser.parse(`/delete ${mesId}`);
                             } else {
                                 cfg.el.click();
@@ -191,15 +189,12 @@
                     terminalBar.appendChild(cfg.el);
                 }
             });
-
-            messageElement.dataset.assembled = 'true';
         }
 
         window.ernyshForceRescan = function() {
             console.log('[Red Cybercore] Force-rescan triggered!');
             const messages = document.querySelectorAll('.mes');
             messages.forEach(messageElement => {
-                delete messageElement.dataset.assembled;
                 setupMesActions(messageElement);
             });
         };
