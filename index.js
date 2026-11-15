@@ -87,10 +87,17 @@
     /* ==========================================
        ЛОГИКА ТЕМЫ ИНДЕКС 0 (Red cybercore)
        ========================================== */
-    function initRedCybercoreLogic() {
-        console.log('[Red Cybercore] Initializing native context-aware terminal theme...');
+    async function initRedCybercoreLogic() {
+        console.log('[Red Cybercore] Initializing native context-aware terminal theme with all buttons...');
 
-        // 1. Инъецируем стили для превращения панели кнопок в терминальный ряд
+        // Опциональный импорт отдельного модуля, если используешь файл delete-mes-FROM-delete-and-resend.js
+        try {
+            await import('./delete-mes-FROM-delete-and-resend.js');
+        } catch (e) {
+            // Файл необязателен, если работаем через встроенный хендлер ниже
+        }
+
+        // 1. Инъецируем стили для превращения панели кнопок в терминальный ряд со всеми подписями
         if (!document.getElementById('ernysh_cybercore_styles')) {
             const style = document.createElement('style');
             style.id = 'ernysh_cybercore_styles';
@@ -129,7 +136,7 @@
                     gap: 6px;
                 }
 
-                /* Видимость кнопок */
+                /* Видимость всех кнопок */
                 .ch_name .menu_button,
                 .ch_name .mes_hide,
                 .ch_name .mes_create_bookmark,
@@ -155,7 +162,7 @@
                 .ch_name .mes_stmb_start { order: 7; }
                 .ch_name .mes_stmb_end { order: 8; }
 
-                /* Терминальный текст через псевдоэлементы */
+                /* Терминальный текст через псевдоэлементы для ВСЕХ кнопок */
                 .ch_name .mes_hide::after { content: ' hide'; font-family: monospace; font-size: 10px; margin-left: 3px; }
                 .ch_name .mes_create_bookmark::after { content: ' check'; font-family: monospace; font-size: 10px; margin-left: 3px; }
                 .ch_name .mes_create_branch::after { content: ' tree'; font-family: monospace; font-size: 10px; margin-left: 3px; }
@@ -195,7 +202,6 @@
                 console.log(`[Red Cybercore] Deleting message at index ${messageIndex} via safe context...`);
 
                 try {
-                    // Используем штатный метод удаления из контекста Таверны, если он есть, либо команду
                     if (typeof ctx.deleteMessage === 'function') {
                         await ctx.deleteMessage(messageIndex);
                     } else if (typeof SlashCommandParser !== 'undefined' && SlashCommandParser.parse) {
@@ -219,17 +225,6 @@
     uiObserver.observe(document.body, { childList: true, subtree: true });
 
     setTimeout(createExtensionUI, 1000);
-
-    // Интеграция с официальным eventSource Таверны для автоприменения при смене чата/рендере
-    const ctx = getContextSafe();
-    if (ctx?.eventSource && ctx?.eventTypes) {
-        ctx.eventSource.on(ctx.eventTypes.CHAT_CHANGED, () => {
-            if (getActiveThemeIndex() !== -1) initRedCybercoreLogic();
-        });
-        ctx.eventSource.on(ctx.eventTypes.MESSAGE_RENDERED, () => {
-            if (getActiveIndexSafe() !== -1) initRedCybercoreLogic();
-        });
-    }
 
     const themeCheckObserver = new MutationObserver((mutations, obs) => {
         const activeIdx = getActiveThemeIndex();
