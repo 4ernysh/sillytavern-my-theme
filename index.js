@@ -88,22 +88,32 @@
        ЛОГИКА ТЕМЫ ИНДЕКС 0 (Red cybercore)
        ========================================== */
     function initRedCybercoreLogic() {
-        console.log('[Red Cybercore] Initializing button restructuring logic...');
+        console.log('[Red Cybercore] Initializing button restructuring logic with exact selectors...');
 
         function setupMesActions(messageElement) {
-            const actionsBar = messageElement.querySelector('.mes_actions');
-            if (!actionsBar || actionsBar.dataset.assembled === 'true') return;
+            if (messageElement.dataset.assembled === 'true') return;
 
-            const btnHide = messageElement.querySelector('.mes_hide');
-            const btnCheck = messageElement.querySelector('.mes_create_bookmark');
-            const btnTree = messageElement.querySelector('.mes_create_branch');
-            const btnDelete = messageElement.querySelector('.mes_edit_delete');
-            const btnEdit = messageElement.querySelector('.mes_edit');
-            const btnPrev = messageElement.querySelector('.mes_stmb_start');
-            const btnNext = messageElement.querySelector('.mes_stmb_end');
+            // Ищем элементы по точным путям, которые ты указала:
+            const chName = messageElement.querySelector('.ch_name');
+            if (!chName) return;
 
-            console.log('[Red Cybercore Debug] Найдена панель:', actionsBar);
-            console.log('[Red Cybercore Debug] Кнопки -> hide:', !!btnHide, '| check:', !!btnCheck, '| tree:', !!btnTree, '| delete:', !!btnDelete, '| edit:', !!btnEdit, '| prev:', !!btnPrev, '| next:', !!btnNext);
+            // 1. Удаление находится в div.mes_edit_buttons div.mes_edit_delete
+            const btnDelete = chName.querySelector('.mes_edit_buttons .mes_edit_delete') || chName.querySelector('.mes_edit_delete');
+            
+            // 2. Редактирование находится в div.mes_buttons div.mes_button
+            const btnEdit = chName.querySelector('.mes_buttons .mes_button') || chName.querySelector('.mes_edit');
+
+            // 3. Остальные кнопки (hide, check, tree, <, >) лежат в div.mes_buttons div.extraMesButtons или раскиданы рядом
+            const extraContainer = chName.querySelector('.mes_buttons .extraMesButtons');
+            
+            // Попробуем выцепить их внутри контейнера или по общим классам Таверны внутри ch_name
+            const btnHide = chName.querySelector('.mes_hide');
+            const btnCheck = chName.querySelector('.mes_create_bookmark') || (extraContainer ? extraContainer.querySelector('.fa-bookmark')?.parentElement : null);
+            const btnTree = chName.querySelector('.mes_create_branch') || (extraContainer ? extraContainer.querySelector('.fa-code-branch')?.parentElement : null);
+            const btnPrev = chName.querySelector('.mes_stmb_start') || (extraContainer ? extraContainer.querySelector('.fa-chevron-left')?.parentElement : null);
+            const btnNext = chName.querySelector('.mes_stmb_end') || (extraContainer ? extraContainer.querySelector('.fa-chevron-right')?.parentElement : null);
+
+            console.log('[Red Cybercore Debug] Найдено в сообщении -> delete:', !!btnDelete, '| edit:', !!btnEdit, '| hide:', !!btnHide, '| check:', !!btnCheck, '| tree:', !!btnTree, '| prev:', !!btnPrev, '| next:', !!btnNext);
 
             const buttonsConfig = [
                 { el: btnHide, text: 'hide' },
@@ -115,7 +125,16 @@
                 { el: btnNext, text: '>' }
             ];
 
-            actionsBar.innerHTML = '';
+            // Создаем единую терминальную панель для красивого вывода
+            let terminalBar = chName.querySelector('.ernysh_terminal_actions');
+            if (!terminalBar) {
+                terminalBar = document.createElement('div');
+                terminalBar.className = 'ernysh_terminal_actions';
+                terminalBar.style.cssText = 'display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 4px;';
+                chName.appendChild(terminalBar);
+            }
+
+            terminalBar.innerHTML = '';
 
             buttonsConfig.forEach(cfg => {
                 if (cfg.el) {
@@ -124,14 +143,15 @@
 
                     const span = document.createElement('span');
                     span.className = 'terminal-btn-text';
+                    span.style.cssText = 'margin-left: 4px; font-size: 10px; font-family: monospace;';
                     span.innerText = cfg.text;
                     cfg.el.appendChild(span);
 
-                    actionsBar.appendChild(cfg.el);
+                    terminalBar.appendChild(cfg.el);
                 }
             });
 
-            actionsBar.dataset.assembled = 'true';
+            messageElement.dataset.assembled = 'true';
         }
 
         window.ernyshForceRescan = function() {
@@ -140,10 +160,7 @@
             console.log('[Red Cybercore Debug] Количество найденных блоков .mes:', messages.length);
             
             messages.forEach(messageElement => {
-                const actionsBar = messageElement.querySelector('.mes_actions');
-                if (actionsBar) {
-                    delete actionsBar.dataset.assembled;
-                }
+                delete messageElement.dataset.assembled;
                 setupMesActions(messageElement);
             });
         };
@@ -161,7 +178,6 @@
 
         observer.observe(document.body, { childList: true, subtree: true });
         
-        // Делаем небольшую задержку при старте, чтобы чат успел отрендериться
         setTimeout(() => {
             window.ernyshForceRescan();
         }, 500);
