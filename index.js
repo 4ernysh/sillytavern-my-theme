@@ -13,7 +13,6 @@
                 initRedCybercoreLogic();
             }
         }
-        // Сюда потом добавятся новые темы по индексам: 1, 2, 3...
     ];
 
     function getActiveThemeIndex() {
@@ -31,8 +30,7 @@
     }
 
     /* ==========================================
-       СОЗДАНИЕ ВЫПАДАЮЩЕГО БЛОКА (АККОРДЕОНА)
-       В СТИЛЕ РОДНЫХ РАСШИРЕНИЙ СИЛЛИ ТАВЕРНЫ
+       НАТИВНЫЙ ИНТЕРФЕЙС РАСШИРЕНИЯ (АККОРДЕОН)
        ========================================== */
     function createExtensionUI() {
         if (document.getElementById('ernysh_theme_manager_settings')) return;
@@ -40,21 +38,20 @@
         const extensionsSettings = document.getElementById('extensions_settings');
         if (!extensionsSettings) return;
 
-        // Создаем контейнер в стиле родных элементов расширений
+        // Используем стандартные системные классы Таверны без ручных цветов
         const panel = document.createElement('div');
         panel.id = 'ernysh_theme_manager_settings';
-        panel.className = 'inline-drawer'; // Родной класс Таверны для блоков
-        panel.style.cssText = 'border: 1px solid #a10000; background: #0b0204; margin-bottom: 10px; border-radius: 4px; overflow: hidden;';
+        panel.className = 'inline-drawer';
         
         panel.innerHTML = `
-            <div id="ernysh_drawer_header" class="inline-drawer-toggle inline-drawer-header" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #130306; cursor: pointer; border-bottom: 1px solid #a10000; font-family: monospace; color: #e7abb5;">
-                <span><b>[ 4ernysh Theme Manager ]</b></span>
-                <i class="fa-solid fa-chevron-down inline-drawer-icon" style="transition: transform 0.2s;"></i>
+            <div id="ernysh_drawer_header" class="inline-drawer-toggle inline-drawer-header">
+                <b>[ 4ernysh Theme Manager ]</b>
+                <i class="fa-solid fa-chevron-down inline-drawer-icon"></i>
             </div>
-            <div id="ernysh_drawer_content" class="inline-drawer-content" style="display: none; padding: 12px; font-family: monospace; color: #e7abb5;">
-                <p style="margin: 0 0 10px 0; font-size: 11px; color: #c25252;">Управление киберпанк-темами и скриптами.</p>
+            <div id="ernysh_drawer_content" class="inline-drawer-content" style="display: none;">
+                <p style="margin: 0 0 10px 0; font-size: 11px;">Управление киберпанк-темами и скриптами.</p>
                 <div style="display: flex; gap: 8px; align-items: center;">
-                    <button id="ernysh_check_btn" style="background: #2b080c; color: #e7abb5; border: 1px solid #a10000; padding: 6px 12px; cursor: pointer; font-family: monospace; border-radius: 3px;">Проверить статус</button>
+                    <button id="ernysh_check_btn" class="menu_button">Проверить статус</button>
                     <span id="ernysh_status_label" style="font-size: 11px;">Статус: не проверено</span>
                 </div>
             </div>
@@ -62,21 +59,19 @@
 
         extensionsSettings.appendChild(panel);
 
-        // Логика сворачивания/разворачивания по клику на заголовок
+        // Системная логика сворачивания/разворачивания по клику на заголовок
         const header = document.getElementById('ernysh_drawer_header');
         const content = document.getElementById('ernysh_drawer_content');
-        const icon = header.querySelector('.inline-drawer-icon');
 
         header.addEventListener('click', () => {
             const isHidden = content.style.display === 'none';
             content.style.display = isHidden ? 'block' : 'none';
-            icon.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-            header.style.borderBottom = isHidden ? '1px solid #a10000' : 'none';
+            header.classList.toggle('open', isHidden);
         });
 
-        // Логика кнопки проверки статуса
+        // Кнопка проверки статуса
         document.getElementById('ernysh_check_btn').addEventListener('click', (e) => {
-            e.stopPropagation(); // Чтобы клик не сворачивал блок
+            e.stopPropagation(); // Чтобы клик по кнопке не сворачивал блок
             const activeIdx = getActiveThemeIndex();
             const statusLabel = document.getElementById('ernysh_status_label');
 
@@ -157,4 +152,5 @@
     if (activeIndex !== -1 && themesRegistry[activeIndex]) {
         themesRegistry[activeIndex].apply();
     }
+})();
 })();
