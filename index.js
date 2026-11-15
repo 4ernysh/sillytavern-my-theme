@@ -30,12 +30,11 @@
     }
 
     /* ==========================================
-       ИНТЕРФЕЙС РАСШИРЕНИЯ (АККОРДЕОН)
+       ИНТЕРФЕЙС РАСШИРЕНИЯ (НАТИВНЫЙ АККОРДЕОН)
        ========================================== */
     function createExtensionUI() {
         if (document.getElementById('ernysh_theme_manager_settings')) return;
 
-        // Ищем блок расширений в Таверне
         const extensionsSettings = document.getElementById('extensions_settings') || document.querySelector('.extensions_settings');
         if (!extensionsSettings) return;
 
@@ -44,12 +43,14 @@
         panel.className = 'inline-drawer';
         panel.style.cssText = 'margin-bottom: 10px; border-radius: 4px; overflow: hidden;';
         
+        // Используем чистую нативную разметку Таверны. 
+        // Обработку кликов/анимации Таверна сделает сама автоматически по классам!
         panel.innerHTML = `
-            <div id="ernysh_drawer_header" class="inline-drawer-toggle inline-drawer-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+            <div class="inline-drawer-toggle inline-drawer-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
                 <span><b>[ 4ernysh Theme Manager ]</b></span>
-                <i class="fa-solid fa-chevron-down inline-drawer-icon" style="transition: transform 0.2s;"></i>
+                <i class="fa-solid fa-chevron-down inline-drawer-icon"></i>
             </div>
-            <div id="ernysh_drawer_content" class="inline-drawer-content" style="display: none;">
+            <div class="inline-drawer-content" style="display: none;">
                 <p style="margin: 0 0 10px 0; font-size: 11px;">Управление киберпанк-темами и скриптами.</p>
                 <div style="display: flex; gap: 8px; align-items: center;">
                     <button id="ernysh_check_btn" class="menu_button">Проверить статус</button>
@@ -60,18 +61,9 @@
 
         extensionsSettings.appendChild(panel);
 
-        const header = document.getElementById('ernysh_drawer_header');
-        const content = document.getElementById('ernysh_drawer_content');
-        const icon = header.querySelector('.inline-drawer-icon');
-
-        header.addEventListener('click', () => {
-            const isHidden = content.style.display === 'none';
-            content.style.display = isHidden ? 'block' : 'none';
-            icon.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-        });
-
+        // Вешаем логику только на нашу кнопку проверки статуса (остальное управляется движком Таверны)
         document.getElementById('ernysh_check_btn').addEventListener('click', (e) => {
-            e.stopPropagation();
+            e.stopPropagation(); // Чтобы клик по кнопке не сворачивал блок
             const activeIdx = getActiveThemeIndex();
             const statusLabel = document.getElementById('ernysh_status_label');
 
@@ -145,17 +137,16 @@
         document.querySelectorAll('.mes').forEach(setupMesActions);
     }
 
-    // Проверяем появление панели расширений через MutationObserver, чтобы не пропустить момент загрузки DOM
+    // Следим за появлением блока расширений
     const uiObserver = new MutationObserver((mutations, obs) => {
         const extensionsSettings = document.getElementById('extensions_settings') || document.querySelector('.extensions_settings');
         if (extensionsSettings) {
             createExtensionUI();
-            obs.disconnect(); // Как только нашли и отрисовали — отключаем наблюдатель
+            obs.disconnect();
         }
     });
     uiObserver.observe(document.body, { childList: true, subtree: true });
 
-    // Также пробуем создать сразу на случай, если DOM уже загружен
     setTimeout(createExtensionUI, 1000);
 
     const activeIndex = getActiveThemeIndex();
