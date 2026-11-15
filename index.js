@@ -9,31 +9,31 @@
             id: 'red_cybercore',
             name: '4ernysh Red cybercore theme',
             apply: function() {
+                console.log('[4ernysh Manager] Applying theme: Red cybercore');
                 initRedCybercoreLogic();
             }
         }
     ];
 
-    // Честная проверка: активна ли тема (без ложных срабатываний по сообщениям)
+    // Проверка темы через селект #themes
     function getActiveThemeIndex() {
         const themeSelect = document.getElementById('themes');
         if (!themeSelect) return -1;
 
-        // Получаем текст выбранной опции (например, "4ernysh Red cybercore theme")
         const selectedOption = themeSelect.options[themeSelect.selectedIndex];
         const themeText = selectedOption ? selectedOption.text.toLowerCase() : '';
         const themeVal = themeSelect.value.toLowerCase();
 
         for (let i = 0; i < themesRegistry.length; i++) {
             const themeId = themesRegistry[i].id.toLowerCase();
-            const themeName = themesRegistry[i].name.toLowerCase();
 
-            // Если в тексте или значении селекта есть наше имя — тема активна!
             if (themeText.includes('4ernysh') || themeText.includes(themeId) ||
                 themeVal.includes('4ernysh') || themeVal.includes(themeId)) {
                 return i;
             }
         }
+        
+        // Если селект есть, но выбрана другая тема — возвращаем -1
         return -1;
     }
 
@@ -51,7 +51,6 @@
         panel.className = 'inline-drawer';
         panel.style.cssText = 'margin-bottom: 10px; border-radius: 4px; overflow: hidden;';
         
-        // Используем .inline-drawer-icon — Таверна сама ожидает этот класс для анимации стрелочки
         panel.innerHTML = `
             <div class="inline-drawer-toggle inline-drawer-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
                 <span><b>[ 4ernysh Theme Manager ]</b></span>
@@ -68,7 +67,6 @@
 
         extensionsSettings.appendChild(panel);
 
-        // Кнопка проверки статуса (клик не должен вызывать багов с аккордеоном)
         document.getElementById('ernysh_check_btn').addEventListener('click', (e) => {
             e.stopPropagation();
             const activeIdx = getActiveThemeIndex();
@@ -78,7 +76,7 @@
                 statusLabel.innerText = `АКТИВНА (${themesRegistry[activeIdx].name}) [Индекс: ${activeIdx}]`;
                 statusLabel.style.color = '#52c252';
             } else {
-                statusLabel.innerText = 'НЕ ВКЛЮЧЕНА (Темы не найдены!)';
+                statusLabel.innerText = 'НЕ ВКЛЮЧЕНА (Выбрана другая тема)';
                 statusLabel.style.color = '#c25252';
             }
         });
@@ -88,11 +86,12 @@
        ЛОГИКА ТЕМЫ ИНДЕКС 0 (Red cybercore)
        ========================================== */
     function initRedCybercoreLogic() {
+        console.log('[Red Cybercore] Initializing button restructuring logic...');
+
         function setupMesActions(messageElement) {
             const actionsBar = messageElement.querySelector('.mes_actions');
             if (!actionsBar || actionsBar.dataset.assembled === 'true') return;
 
-            // 1. Находим родные кнопки Силли Таверны внутри сообщения
             const btnHide = messageElement.querySelector('.mes_hide');
             const btnCheck = messageElement.querySelector('.mes_create_bookmark');
             const btnTree = messageElement.querySelector('.mes_create_branch');
@@ -101,7 +100,6 @@
             const btnPrev = messageElement.querySelector('.mes_stmb_start');
             const btnNext = messageElement.querySelector('.mes_stmb_end');
 
-            // 2. Настраиваем нашу терминальную конфигурацию
             const buttonsConfig = [
                 { el: btnHide, text: 'hide' },
                 { el: btnCheck, text: 'check' },
@@ -112,13 +110,10 @@
                 { el: btnNext, text: '>' }
             ];
 
-            // 3. Очищаем стандартный контейнер действий
             actionsBar.innerHTML = '';
 
-            // 4. Переносим кнопки и стилизуем их под киберпанк-терминал
             buttonsConfig.forEach(cfg => {
                 if (cfg.el) {
-                    // Убираем старый текст, если скрипт сработал повторно
                     const oldText = cfg.el.querySelector('.terminal-btn-text');
                     if (oldText) oldText.remove();
 
@@ -131,11 +126,9 @@
                 }
             });
 
-            // 5. Ставим флаг, что этот блок мы уже собрали
             actionsBar.dataset.assembled = 'true';
         }
 
-        // Наблюдатель следит за чатом: как только подгружается новое сообщение — перестраиваем его кнопки
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 mutation.addedNodes.forEach((node) => {
@@ -148,12 +141,10 @@
         });
 
         observer.observe(document.body, { childList: true, subtree: true });
-
-        // Сразу обрабатываем все сообщения, которые уже есть на экране
         document.querySelectorAll('.mes').forEach(setupMesActions);
     }
 
-    // Авто-инициализация UI
+    // Авто-инициализация UI панели расширений
     const uiObserver = new MutationObserver((mutations, obs) => {
         const extensionsSettings = document.getElementById('extensions_settings') || document.querySelector('.extensions_settings');
         if (extensionsSettings) {
@@ -165,9 +156,32 @@
 
     setTimeout(createExtensionUI, 1000);
 
-    // Проверяем тему при старте и запускаем её логику
-    const activeIndex = getActiveThemeIndex();
-    if (activeIndex !== -1 && themesRegistry[activeIndex]) {
-        themesRegistry[activeIndex].apply();
+    // Умный инициализатор темы: ждем, пока селект #themes появится в DOM, и проверяем
+    const themeCheckObserver = new MutationObserver((mutations, obs) => {
+        const activeIdx = getActiveThemeIndex();
+        if (activeIdx !== -1 && themesRegistry[activeIdx]) {
+            themesRegistry[activeIdx].apply();
+            obs.disconnect(); // Нашли и применили — отключаем наблюдатель
+        }
+    });
+    themeCheckObserver.observe(document.body, { childList: true, subtree: true });
+
+    // Пробуем проверить сразу на случай, если селект уже загружен
+    const immediateIdx = getActiveThemeIndex();
+    if (immediateIdx !== -1 && themesRegistry[immediateIdx]) {
+        themesRegistry[immediateIdx].apply();
+        themeCheckObserver.disconnect();
+    }
+
+    // Также следим за изменением темы прямо в селекте на лету
+    document.addEventListener('change', (e) => {
+        if (e.target && e.target.id === 'themes') {
+            const activeIdx = getActiveThemeIndex();
+            if (activeIdx !== -1 && themesRegistry[activeIdx]) {
+                themesRegistry[activeIdx].apply();
+            }
+        }
+    });
+})();
     }
 })(); // <-- ВОТ ТУТ ДОЛЖНЫ БЫТЬ СКОБКИ () В КОНЦЕ!
