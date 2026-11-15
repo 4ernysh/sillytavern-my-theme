@@ -88,122 +88,82 @@
        ЛОГИКА ТЕМЫ ИНДЕКС 0 (Red cybercore)
        ========================================== */
     function initRedCybercoreLogic() {
-        console.log('[Red Cybercore] Initializing robust JS assembler for all message buttons...');
+        console.log('[Red Cybercore] Initializing pure CSS flex order layout (no DOM manipulation errors)...');
 
-        // Базовые стили для терминальной панели кнопок
+        // Инъецируем стили, которые делают все кнопки видимыми, убирают троеточие и расставляют порядок
         if (!document.getElementById('ernysh_cybercore_styles')) {
             const style = document.createElement('style');
             style.id = 'ernysh_cybercore_styles';
             style.innerHTML = `
-                .ernysh_terminal_actions {
+                /* Превращаем блок имени в гибкий контейнер */
+                .ch_name {
                     display: flex !important;
                     flex-wrap: wrap;
                     align-items: center;
                     gap: 6px;
-                    margin-top: 4px;
-                    width: 100%;
                 }
-                .ernysh_terminal_actions div,
-                .ernysh_terminal_actions span,
-                .ernysh_terminal_actions button {
+
+                /* Раскрываем контейнеры скрытых/дополнительных кнопок (троеточие) */
+                .ch_name .extra_buttons,
+                .ch_name .mes_extra_buttons_wrapper,
+                .ch_name .menu_button_container {
+                    display: flex !important;
+                    flex-wrap: wrap;
+                    align-items: center;
+                    gap: 6px;
+                    background: transparent !important;
+                    box-shadow: none !important;
+                    border: none !important;
+                    padding: 0 !important;
+                }
+
+                /* Скрываем саму иконку троеточия / меню выпадашки */
+                .ch_name .extra_buttons_ap,
+                .ch_name .fa-ellipsis-v,
+                .ch_name .fa-ellipsis-h {
+                    display: none !important;
+                }
+                
+                /* Принудительно показываем и делаем интерактивными все кнопки */
+                .ch_name .menu_button,
+                .ch_name .mes_hide,
+                .ch_name .mes_create_bookmark,
+                .ch_name .mes_create_branch,
+                .ch_name .mes_copy,
+                .ch_name .mes_edit_delete,
+                .ch_name .mes_edit,
+                .ch_name .mes_stmb_start,
+                .ch_name .mes_stmb_end {
                     display: inline-flex !important;
                     align-items: center;
                     pointer-events: auto !important;
                     opacity: 1 !important;
                 }
-                /* Прячем старые мусорные обертки с троеточием */
-                .ch_name .extra_buttons,
-                .ch_name .mes_extra_buttons_wrapper {
-                    display: none !important;
-                }
+
+                /* Настраиваем точный порядок элементов через CSS order */
+                .ch_name .mes_hide { order: 1; }
+                .ch_name .mes_create_bookmark { order: 2; }
+                .ch_name .mes_create_branch { order: 3; }
+                .ch_name .mes_copy { order: 4; }
+                .ch_name .mes_edit_delete { order: 5; }
+                .ch_name .mes_edit { order: 6; }
+                .ch_name .mes_stmb_start { order: 7; }
+                .ch_name .mes_stmb_end { order: 8; }
+
+                /* Добавляем терминальный текст к кнопкам через псевдоэлементы */
+                .ch_name .mes_hide::after { content: ' hide'; font-family: monospace; font-size: 10px; margin-left: 3px; }
+                .ch_name .mes_create_bookmark::after { content: ' check'; font-family: monospace; font-size: 10px; margin-left: 3px; }
+                .ch_name .mes_create_branch::after { content: ' tree'; font-family: monospace; font-size: 10px; margin-left: 3px; }
+                .ch_name .mes_copy::after { content: ' copy'; font-family: monospace; font-size: 10px; margin-left: 3px; }
+                .ch_name .mes_edit_delete::after { content: ' delete'; font-family: monospace; font-size: 10px; margin-left: 3px; }
+                .ch_name .mes_edit::after { content: ' edit'; font-family: monospace; font-size: 10px; margin-left: 3px; }
             `;
             document.head.appendChild(style);
         }
 
-        function setupMesActions(messageElement) {
-            if (messageElement.dataset.assembled === 'true') return;
-
-            const chName = messageElement.querySelector('.ch_name');
-            if (!chName) return;
-
-            // Ищем кнопки везде внутри сообщения (даже если они были в скрытых меню)
-            const btnHide = messageElement.querySelector('.mes_hide, .mes_block');
-            const btnCheck = messageElement.querySelector('.mes_create_bookmark');
-            const btnTree = messageElement.querySelector('.mes_create_branch');
-            const btnCopy = messageElement.querySelector('.mes_copy');
-            const btnDelete = messageElement.querySelector('.mes_edit_delete, .mes_del');
-            const btnEdit = messageElement.querySelector('.mes_edit');
-            const btnPrev = messageElement.querySelector('.mes_stmb_start');
-            const btnNext = messageElement.querySelector('.mes_stmb_end');
-
-            const buttonsConfig = [
-                { el: btnHide, text: 'hide' },
-                { el: btnCheck, text: 'check' },
-                { el: btnTree, text: 'tree' },
-                { el: btnCopy, text: 'copy' },
-                { el: btnDelete, text: 'delete' },
-                { el: btnEdit, text: 'edit' },
-                { el: btnPrev, text: '<' },
-                { el: btnNext, text: '>' }
-            ];
-
-            let terminalBar = chName.querySelector('.ernysh_terminal_actions');
-            if (!terminalBar) {
-                terminalBar = document.createElement('div');
-                terminalBar.className = 'ernysh_terminal_actions';
-                chName.appendChild(terminalBar);
-            }
-
-            terminalBar.innerHTML = '';
-
-            buttonsConfig.forEach(cfg => {
-                if (cfg.el) {
-                    // Удаляем старый текстовый спан, если он уже был
-                    const oldText = cfg.el.querySelector('.terminal-btn-text');
-                    if (oldText) oldText.remove();
-
-                    const span = document.createElement('span');
-                    span.className = 'terminal-btn-text';
-                    span.style.cssText = 'margin-left: 4px; font-size: 10px; font-family: monospace;';
-                    span.innerText = cfg.text;
-                    cfg.el.appendChild(span);
-
-                    cfg.el.style.display = 'inline-flex';
-                    cfg.el.style.opacity = '1';
-                    cfg.el.style.pointerEvents = 'auto';
-
-                    terminalBar.appendChild(cfg.el);
-                }
-            });
-
-            messageElement.dataset.assembled = 'true';
-        }
-
         window.ernyshForceRescan = function() {
-            console.log('[Red Cybercore] Force-rescan triggered!');
-            const messages = document.querySelectorAll('.mes');
-            messages.forEach(messageElement => {
-                delete messageElement.dataset.assembled;
-                setupMesActions(messageElement);
-            });
+            console.log('[Red Cybercore] Force-rescan triggered (CSS only)!');
         };
-
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                mutation.addedNodes.forEach((node) => {
-                    if (node.nodeType === 1) {
-                        if (node.matches('.mes')) setupMesActions(node);
-                        node.querySelectorAll('.mes').forEach(setupMesActions);
-                    }
-                });
-            });
-        });
-
-        observer.observe(document.body, { childList: true, subtree: true });
-        
-        setTimeout(() => {
-            window.ernyshForceRescan();
-        }, 500);
     }
 
     // Авто-инициализация UI панели расширений
@@ -234,11 +194,6 @@
     }
 
     document.addEventListener('change', (e) => {
-        if (e.target && e.target.id === 'themes') {
-            const activeIdx = getActiveThemeIndex();
-            if (activeIdx !== -1 && themesRegistry[activeIdx]) {
-                themesRegistry[activeIdx].apply();
-            }
-        }
+        e.target && e.target.id === 'themes' && getActiveThemeIndex() !== -1 && themesRegistry[getActiveThemeIndex()].apply();
     });
 })();
