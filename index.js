@@ -71,12 +71,7 @@
             if (activeIdx !== -1 && themesRegistry[activeIdx]) {
                 statusLabel.innerText = `АКТИВНА (${themesRegistry[activeIdx].name}) [Индекс: ${activeIdx}]`;
                 statusLabel.style.color = '#52c252';
-
-                if (typeof window.ernyshForceRescan === 'function') {
-                    window.ernyshForceRescan();
-                } else {
-                    themesRegistry[activeIdx].apply();
-                }
+                themesRegistry[activeIdx].apply();
             } else {
                 statusLabel.innerText = 'НЕ ВКЛЮЧЕНА (Выбрана другая тема)';
                 statusLabel.style.color = '#c25252';
@@ -88,136 +83,115 @@
        ЛОГИКА ТЕМЫ ИНДЕКС 0 (Red cybercore)
        ========================================== */
     function initRedCybercoreLogic() {
-        console.log('[Red Cybercore] Initializing precise safe button assembler...');
+        console.log('[Red Cybercore] Initializing safe CSS layout & custom capture delete handler...');
 
-        // Стили для терминальной панели и скрытия старых мусорных контейнеров
+        // 1. Инъецируем чистые CSS-стили для терминального вида кнопок
         if (!document.getElementById('ernysh_cybercore_styles')) {
             const style = document.createElement('style');
             style.id = 'ernysh_cybercore_styles';
             style.innerHTML = `
-                .ernysh_terminal_bar {
+                /* Превращаем панели кнопок в единый гибкий ряд */
+                .ch_name .mes_buttons {
                     display: flex !important;
                     flex-wrap: wrap;
                     align-items: center;
                     gap: 6px;
-                    margin-top: 4px;
                 }
-                .ernysh_terminal_bar .menu_button,
-                .ernysh_terminal_bar div {
+
+                /* Раскрываем контейнер скрытых кнопок (троеточие) в общий ряд */
+                .ch_name .extraMesButtons {
+                    display: flex !important;
+                    flex-wrap: wrap;
+                    align-items: center;
+                    gap: 6px;
+                    background: transparent !important;
+                    border: none !important;
+                    box-shadow: none !important;
+                    padding: 0 !important;
+                }
+
+                /* Скрываем саму иконку троеточия, раз кнопки развернуты */
+                .ch_name .extra_buttons_ap,
+                .ch_name .fa-ellipsis-v,
+                .ch_name .fa-ellipsis-h {
+                    display: none !important;
+                }
+
+                /* Панель кнопок редактирования (сохранить/отмена/удалить) */
+                .ch_name .mes_edit_buttons {
+                    display: inline-flex !important;
+                    align-items: center;
+                    gap: 6px;
+                }
+
+                /* Видимость и кликабельность всех кнопок */
+                .ch_name .menu_button,
+                .ch_name .mes_hide,
+                .ch_name .mes_create_bookmark,
+                .ch_name .mes_create_branch,
+                .ch_name .mes_copy,
+                .ch_name .mes_edit_delete,
+                .ch_name .mes_edit,
+                .ch_name .mes_stmb_start,
+                .ch_name .mes_stmb_end {
                     display: inline-flex !important;
                     align-items: center;
                     pointer-events: auto !important;
                     opacity: 1 !important;
                 }
-                /* Прячем старые контейнеры, чтобы не дублировались */
-                .ch_name .extraMesButtons,
-                .ch_name .mes_edit_buttons,
-                .ch_name .extra_buttons,
-                .ch_name .mes_extra_buttons_wrapper {
-                    display: none !important;
-                }
+
+                /* Порядок кнопок через CSS order */
+                .ch_name .mes_hide { order: 1; }
+                .ch_name .mes_create_bookmark { order: 2; }
+                .ch_name .mes_create_branch { order: 3; }
+                .ch_name .mes_copy { order: 4; }
+                .ch_name .mes_edit_delete { order: 5; }
+                .ch_name .mes_edit { order: 6; }
+                .ch_name .mes_stmb_start { order: 7; }
+                .ch_name .mes_stmb_end { order: 8; }
+
+                /* Терминальный текст через псевдоэлементы */
+                .ch_name .mes_hide::after { content: ' hide'; font-family: monospace; font-size: 10px; margin-left: 3px; }
+                .ch_name .mes_create_bookmark::after { content: ' check'; font-family: monospace; font-size: 10px; margin-left: 3px; }
+                .ch_name .mes_create_branch::after { content: ' tree'; font-family: monospace; font-size: 10px; margin-left: 3px; }
+                .ch_name .mes_copy::after { content: ' copy'; font-family: monospace; font-size: 10px; margin-left: 3px; }
+                .ch_name .mes_edit_delete::after { content: ' delete'; font-family: monospace; font-size: 10px; margin-left: 3px; }
+                .ch_name .mes_edit::after { content: ' edit'; font-family: monospace; font-size: 10px; margin-left: 3px; }
             `;
             document.head.appendChild(style);
         }
 
-        function setupMesActions(messageElement) {
-            if (messageElement.dataset.assembled === 'true') return;
+        // 2. Глобальный перехватчик клика на удаление (на фазе захвата, чтобы обойти баг с swipe_id в script.js)
+        if (!window._ernyshDeleteHandlerAttached) {
+            window._ernyshDeleteHandlerAttached = true;
+            document.addEventListener('click', (e) => {
+                const deleteBtn = e.target.closest('.mes_edit_delete');
+                if (!deleteBtn) return;
 
-            const chName = messageElement.querySelector('.ch_name');
-            if (!chName) return;
+                const messageElement = deleteBtn.closest('.mes');
+                if (!messageElement) return;
 
-            const mesButtons = chName.querySelector('.mes_buttons');
-            if (!mesButtons) return;
+                // Предотвращаем дефолтный крашащийся скрипт Таверны
+                e.preventDefault();
+                e.stopImmediatePropagation();
 
-            let terminalBar = mesButtons.querySelector('.ernysh_terminal_bar');
-            if (!terminalBar) {
-                terminalBar = document.createElement('div');
-                terminalBar.className = 'ernysh_terminal_bar';
-                mesButtons.appendChild(terminalBar);
-            }
-
-            // Четкий поиск конкретных кнопок по их точным классам
-            const btnHide = messageElement.querySelector('.mes_hide');
-            const btnCheck = messageElement.querySelector('.mes_create_bookmark');
-            const btnTree = messageElement.querySelector('.mes_create_branch');
-            const btnCopy = messageElement.querySelector('.mes_copy');
-            const btnDelete = messageElement.querySelector('.mes_edit_delete');
-            const btnEdit = messageElement.querySelector('.mes_edit');
-            const btnPrev = messageElement.querySelector('.mes_stmb_start');
-            const btnNext = messageElement.querySelector('.mes_stmb_end');
-
-            const buttonsConfig = [
-                { el: btnHide, text: 'hide' },
-                { el: btnCheck, text: 'check' },
-                { el: btnTree, text: 'tree' },
-                { el: btnCopy, text: 'copy' },
-                { el: btnDelete, text: 'delete', isDelete: true },
-                { el: btnEdit, text: 'edit' },
-                { el: btnPrev, text: '<' },
-                { el: btnNext, text: '>' }
-            ];
-
-            buttonsConfig.forEach(cfg => {
-                if (cfg.el && !terminalBar.contains(cfg.el)) {
-                    // Убираем старый текстовый спан, если он остался от прошлых запусков
-                    const oldText = cfg.el.querySelector('.terminal-btn-text');
-                    if (oldText) oldText.remove();
-
-                    const span = document.createElement('span');
-                    span.className = 'terminal-btn-text';
-                    span.style.cssText = 'margin-left: 4px; font-size: 10px; font-family: monospace;';
-                    span.innerText = cfg.text;
-                    cfg.el.appendChild(span);
-
-                    cfg.el.style.display = 'inline-flex';
-                    cfg.el.style.opacity = '1';
-                    cfg.el.style.pointerEvents = 'auto';
-
-                    // Безопасный клик удаления через STscript /delete
-                    if (cfg.isDelete) {
-                        cfg.el.onclick = (e) => {
-                            e.stopPropagation();
-                            const mesId = messageElement.getAttribute('mesid');
-                            if (mesId !== null && typeof SlashCommandParser !== 'undefined' && SlashCommandParser.parse) {
-                                SlashCommandParser.parse(`/delete ${mesId}`);
-                            } else {
-                                cfg.el.click();
-                            }
-                        };
-                    }
-
-                    terminalBar.appendChild(cfg.el);
+                // Читаем номер из .mesIDDisplay (формат #N)
+                const idDisplay = messageElement.querySelector('.mesIDDisplay');
+                let mesId = null;
+                if (idDisplay) {
+                    mesId = idDisplay.textContent.replace('#', '').trim();
                 }
-            });
+                if (!mesId) {
+                    mesId = messageElement.getAttribute('mesid');
+                }
 
-            messageElement.dataset.assembled = 'true';
+                console.log(`[Red Cybercore] Safe delete triggered for message ID: ${mesId}`);
+
+                if (mesId !== null && typeof SlashCommandParser !== 'undefined' && SlashCommandParser.parse) {
+                    SlashCommandParser.parse(`/delete ${mesId}`);
+                }
+            }, true); // true = фаза захвата (перехватываем до того, как сработает сломанный код Таверны)
         }
-
-        window.ernyshForceRescan = function() {
-            console.log('[Red Cybercore] Force-rescan triggered!');
-            const messages = document.querySelectorAll('.mes');
-            messages.forEach(messageElement => {
-                delete messageElement.dataset.assembled;
-                setupMesActions(messageElement);
-            });
-        };
-
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                mutation.addedNodes.forEach((node) => {
-                    if (node.nodeType === 1) {
-                        if (node.matches('.mes')) setupMesActions(node);
-                        node.querySelectorAll('.mes').forEach(setupMesActions);
-                    }
-                });
-            });
-        });
-
-        observer.observe(document.body, { childList: true, subtree: true });
-        
-        setTimeout(() => {
-            window.ernyshForceRescan();
-        }, 500);
     }
 
     // Авто-инициализация UI панели расширений
