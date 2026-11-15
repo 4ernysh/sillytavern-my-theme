@@ -71,12 +71,7 @@
             if (activeIdx !== -1 && themesRegistry[activeIdx]) {
                 statusLabel.innerText = `АКТИВНА (${themesRegistry[activeIdx].name}) [Индекс: ${activeIdx}]`;
                 statusLabel.style.color = '#52c252';
-
-                if (typeof window.ernyshForceRescan === 'function') {
-                    window.ernyshForceRescan();
-                } else {
-                    themesRegistry[activeIdx].apply();
-                }
+                themesRegistry[activeIdx].apply();
             } else {
                 statusLabel.innerText = 'НЕ ВКЛЮЧЕНА (Выбрана другая тема)';
                 statusLabel.style.color = '#c25252';
@@ -88,100 +83,53 @@
        ЛОГИКА ТЕМЫ ИНДЕКС 0 (Red cybercore)
        ========================================== */
     function initRedCybercoreLogic() {
-        console.log('[Red Cybercore] Initializing button restructuring logic with native click delete...');
+        console.log('[Red Cybercore] Initializing pure CSS order layout & native delete fix...');
 
-        function setupMesActions(messageElement) {
-            if (messageElement.dataset.assembled === 'true') return;
-
-            const chName = messageElement.querySelector('.ch_name');
-            if (!chName) return;
-
-            const btnHide = chName.querySelector('.mes_hide');
-            const btnCheck = chName.querySelector('.mes_create_bookmark');
-            const btnTree = chName.querySelector('.mes_create_branch');
-            const btnDelete = chName.querySelector('.mes_edit_delete');
-            const btnEdit = chName.querySelector('.mes_edit');
-            const btnPrev = chName.querySelector('.mes_stmb_start');
-            const btnNext = chName.querySelector('.mes_stmb_end');
-
-            const buttonsConfig = [
-                { el: btnHide, text: 'hide' },
-                { el: btnCheck, text: 'check' },
-                { el: btnTree, text: 'tree' },
-                { el: btnDelete, text: 'delete', isDelete: true },
-                { el: btnEdit, text: 'edit' },
-                { el: btnPrev, text: '<' },
-                { el: btnNext, text: '>' }
-            ];
-
-            let terminalBar = chName.querySelector('.ernysh_terminal_actions');
-            if (!terminalBar) {
-                terminalBar = document.createElement('div');
-                terminalBar.className = 'ernysh_terminal_actions';
-                terminalBar.style.cssText = 'display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 4px;';
-                chName.appendChild(terminalBar);
-            }
-
-            terminalBar.innerHTML = '';
-
-            buttonsConfig.forEach(cfg => {
-                if (cfg.el) {
-                    const oldText = cfg.el.querySelector('.terminal-btn-text');
-                    if (oldText) oldText.remove();
-
-                    const span = document.createElement('span');
-                    span.className = 'terminal-btn-text';
-                    span.style.cssText = 'margin-left: 4px; font-size: 10px; font-family: monospace;';
-                    span.innerText = cfg.text;
-                    cfg.el.appendChild(span);
-
-                    // Прямой клик по нативной кнопке удаления внутри сообщения
-                    if (cfg.isDelete) {
-                        cfg.el.style.pointerEvents = 'auto';
-                        cfg.el.style.opacity = '1';
-                        
-                        cfg.el.onclick = (e) => {
-                            e.stopPropagation();
-                            const realDelete = messageElement.querySelector('.mes_edit_delete');
-                            if (realDelete) {
-                                console.log('[Red Cybercore] Triggering real delete button click');
-                                realDelete.click();
-                            }
-                        };
-                    }
-
-                    terminalBar.appendChild(cfg.el);
+        // Инъецируем стили для управления порядком кнопок и текстом через CSS Flexbox
+        if (!document.getElementById('ernysh_cybercore_styles')) {
+            const style = document.createElement('style');
+            style.id = 'ernysh_cybercore_styles';
+            style.innerHTML = `
+                /* Превращаем блок имени в гибкий контейнер */
+                .ch_name {
+                    display: flex !important;
+                    flex-wrap: wrap;
+                    align-items: center;
+                    gap: 6px;
                 }
-            });
+                
+                /* Делаем все кнопки видимыми и кликабельными */
+                .ch_name .mes_hide,
+                .ch_name .mes_create_bookmark,
+                .ch_name .mes_create_branch,
+                .ch_name .mes_edit_delete,
+                .ch_name .mes_edit,
+                .ch_name .mes_stmb_start,
+                .ch_name .mes_stmb_end {
+                    display: inline-flex !important;
+                    align-items: center;
+                    pointer-events: auto !important;
+                    opacity: 1 !important;
+                }
 
-            messageElement.dataset.assembled = 'true';
+                /* Задаем порядок элементов через CSS order */
+                .ch_name .mes_hide { order: 1; }
+                .ch_name .mes_create_bookmark { order: 2; }
+                .ch_name .mes_create_branch { order: 3; }
+                .ch_name .mes_edit_delete { order: 4; }
+                .ch_name .mes_edit { order: 5; }
+                .ch_name .mes_stmb_start { order: 6; }
+                .ch_name .mes_stmb_end { order: 7; }
+
+                /* Добавляем терминальный текст к кнопкам */
+                .ch_name .mes_hide::after { content: ' hide'; font-family: monospace; font-size: 10px; margin-left: 3px; }
+                .ch_name .mes_create_bookmark::after { content: ' check'; font-family: monospace; font-size: 10px; margin-left: 3px; }
+                .ch_name .mes_create_branch::after { content: ' tree'; font-family: monospace; font-size: 10px; margin-left: 3px; }
+                .ch_name .mes_edit_delete::after { content: ' delete'; font-family: monospace; font-size: 10px; margin-left: 3px; }
+                .ch_name .mes_edit::after { content: ' edit'; font-family: monospace; font-size: 10px; margin-left: 3px; }
+            `;
+            document.head.appendChild(style);
         }
-
-        window.ernyshForceRescan = function() {
-            console.log('[Red Cybercore] Force-rescan triggered!');
-            const messages = document.querySelectorAll('.mes');
-            messages.forEach(messageElement => {
-                delete messageElement.dataset.assembled;
-                setupMesActions(messageElement);
-            });
-        };
-
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                mutation.addedNodes.forEach((node) => {
-                    if (node.nodeType === 1) {
-                        if (node.matches('.mes')) setupMesActions(node);
-                        node.querySelectorAll('.mes').forEach(setupMesActions);
-                    }
-                });
-            });
-        });
-
-        observer.observe(document.body, { childList: true, subtree: true });
-        
-        setTimeout(() => {
-            window.ernyshForceRescan();
-        }, 500);
     }
 
     // Авто-инициализация UI панели расширений
