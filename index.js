@@ -9,7 +9,6 @@
             id: 'red_cybercore',
             name: '4ernysh Red cybercore theme',
             apply: function() {
-                console.log('[4ernysh Manager] Loading theme [0]: 4ernysh Red cybercore theme');
                 initRedCybercoreLogic();
             }
         }
@@ -59,10 +58,10 @@
                 <i class="fa-solid fa-chevron-down inline-drawer-icon"></i>
             </div>
             <div class="inline-drawer-content" style="display: none;">
-                <p style="margin: 0 0 10px 0; font-size: 11px;">Управление киберпанк-темами и скриптами.</p>
+                <p style="margin: 0 0 10px 0; font-size: 11px;">Управление темами и скриптами от черныша :3</p>
                 <div style="display: flex; gap: 8px; align-items: center;">
-                    <button id="ernysh_check_btn" class="menu_button">Проверить статус</button>
-                    <span id="ernysh_status_label" style="font-size: 11px;">Статус: не проверено</span>
+                    <button id="ernysh_check_btn" class="menu_button"> Проверить статус!</button>
+                    <span id="ernysh_status_label" style="font-size: 11px;">Статус: не проверено D:</span>
                 </div>
             </div>
         `;
@@ -79,7 +78,7 @@
                 statusLabel.innerText = `АКТИВНА (${themesRegistry[activeIdx].name}) [Индекс: ${activeIdx}]`;
                 statusLabel.style.color = '#52c252';
             } else {
-                statusLabel.innerText = 'НЕ ВКЛЮЧЕНА (Тема 4ernysh не найдена)';
+                statusLabel.innerText = 'НЕ ВКЛЮЧЕНА (Темы не найдены!)';
                 statusLabel.style.color = '#c25252';
             }
         });
@@ -93,6 +92,7 @@
             const actionsBar = messageElement.querySelector('.mes_actions');
             if (!actionsBar || actionsBar.dataset.assembled === 'true') return;
 
+            // 1. Находим родные кнопки Силли Таверны внутри сообщения
             const btnHide = messageElement.querySelector('.mes_hide');
             const btnCheck = messageElement.querySelector('.mes_create_bookmark');
             const btnTree = messageElement.querySelector('.mes_create_branch');
@@ -101,6 +101,7 @@
             const btnPrev = messageElement.querySelector('.mes_stmb_start');
             const btnNext = messageElement.querySelector('.mes_stmb_end');
 
+            // 2. Настраиваем нашу терминальную конфигурацию
             const buttonsConfig = [
                 { el: btnHide, text: 'hide' },
                 { el: btnCheck, text: 'check' },
@@ -111,10 +112,13 @@
                 { el: btnNext, text: '>' }
             ];
 
+            // 3. Очищаем стандартный контейнер действий
             actionsBar.innerHTML = '';
 
+            // 4. Переносим кнопки и стилизуем их под киберпанк-терминал
             buttonsConfig.forEach(cfg => {
                 if (cfg.el) {
+                    // Убираем старый текст, если скрипт сработал повторно
                     const oldText = cfg.el.querySelector('.terminal-btn-text');
                     if (oldText) oldText.remove();
 
@@ -127,9 +131,11 @@
                 }
             });
 
+            // 5. Ставим флаг, что этот блок мы уже собрали
             actionsBar.dataset.assembled = 'true';
         }
 
+        // Наблюдатель следит за чатом: как только подгружается новое сообщение — перестраиваем его кнопки
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 mutation.addedNodes.forEach((node) => {
@@ -142,23 +148,7 @@
         });
 
         observer.observe(document.body, { childList: true, subtree: true });
+
+        // Сразу обрабатываем все сообщения, которые уже есть на экране
         document.querySelectorAll('.mes').forEach(setupMesActions);
     }
-
-    // Следим за появлением панели расширений
-    const uiObserver = new MutationObserver((mutations, obs) => {
-        const extensionsSettings = document.getElementById('extensions_settings') || document.querySelector('.extensions_settings');
-        if (extensionsSettings) {
-            createExtensionUI();
-            obs.disconnect();
-        }
-    });
-    uiObserver.observe(document.body, { childList: true, subtree: true });
-
-    setTimeout(createExtensionUI, 1000);
-
-    const activeIndex = getActiveThemeIndex();
-    if (activeIndex !== -1 && themesRegistry[activeIndex]) {
-        themesRegistry[activeIndex].apply();
-    }
-})();
