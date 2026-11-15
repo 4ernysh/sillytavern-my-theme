@@ -143,16 +143,13 @@
                         cfg.el.onclick = (e) => {
                             e.stopPropagation();
                             const mesId = messageElement.getAttribute('mesid');
-                            console.log(`[Red Cybercore] Executing STscript delete for message ID: ${mesId}`);
+                            console.log(`[Red Cybercore] Удаление через STscript: /delete ${mesId}`);
 
                             if (mesId !== null && mesId !== undefined) {
-                                // Вызываем нативную функцию выполнения слэш-команд Силли Таверны
-                                if (typeof executeSlashCommands === 'function') {
-                                    executeSlashCommands(`/delete ${mesId}`);
-                                } else if (window.SlashCommandParser?.parse) {
+                                if (typeof SlashCommandParser !== 'undefined' && SlashCommandParser.parse) {
+                                    SlashCommandParser.parse(`/delete ${mesId}`);
+                                } else if (window.SlashCommandParser && window.SlashCommandParser.parse) {
                                     window.SlashCommandParser.parse(`/delete ${mesId}`);
-                                } else {
-                                    console.warn('[Red Cybercore] executeSlashCommands is not available!');
                                 }
                             }
                         };
