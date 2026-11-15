@@ -88,7 +88,7 @@
        ЛОГИКА ТЕМЫ ИНДЕКС 0 (Red cybercore)
        ========================================== */
     function initRedCybercoreLogic() {
-        console.log('[Red Cybercore] Initializing button restructuring logic with STscript delete...');
+        console.log('[Red Cybercore] Initializing button restructuring logic with native click delete...');
 
         function setupMesActions(messageElement) {
             if (messageElement.dataset.assembled === 'true') return;
@@ -135,22 +135,17 @@
                     span.innerText = cfg.text;
                     cfg.el.appendChild(span);
 
-                    // Интегрируем удаление через STscript команду /delete
+                    // Прямой клик по нативной кнопке удаления внутри сообщения
                     if (cfg.isDelete) {
                         cfg.el.style.pointerEvents = 'auto';
                         cfg.el.style.opacity = '1';
                         
                         cfg.el.onclick = (e) => {
                             e.stopPropagation();
-                            const mesId = messageElement.getAttribute('mesid');
-                            console.log(`[Red Cybercore] Удаление через STscript: /delete ${mesId}`);
-
-                            if (mesId !== null && mesId !== undefined) {
-                                if (typeof SlashCommandParser !== 'undefined' && SlashCommandParser.parse) {
-                                    SlashCommandParser.parse(`/delete ${mesId}`);
-                                } else if (window.SlashCommandParser && window.SlashCommandParser.parse) {
-                                    window.SlashCommandParser.parse(`/delete ${mesId}`);
-                                }
+                            const realDelete = messageElement.querySelector('.mes_edit_delete');
+                            if (realDelete) {
+                                console.log('[Red Cybercore] Triggering real delete button click');
+                                realDelete.click();
                             }
                         };
                     }
