@@ -88,7 +88,7 @@
        ЛОГИКА ТЕМЫ ИНДЕКС 0 (Red cybercore)
        ========================================== */
     function initRedCybercoreLogic() {
-        console.log('[Red Cybercore] Initializing button restructuring logic with verified classes...');
+        console.log('[Red Cybercore] Initializing button restructuring logic with interactive delete fix...');
 
         function setupMesActions(messageElement) {
             if (messageElement.dataset.assembled === 'true') return;
@@ -108,7 +108,7 @@
                 { el: btnHide, text: 'hide' },
                 { el: btnCheck, text: 'check' },
                 { el: btnTree, text: 'tree' },
-                { el: btnDelete, text: 'delete' },
+                { el: btnDelete, text: 'delete', isDelete: true },
                 { el: btnEdit, text: 'edit' },
                 { el: btnPrev, text: '<' },
                 { el: btnNext, text: '>' }
@@ -134,6 +134,26 @@
                     span.style.cssText = 'margin-left: 4px; font-size: 10px; font-family: monospace;';
                     span.innerText = cfg.text;
                     cfg.el.appendChild(span);
+
+                    // Делаем кнопку delete гарантированно кликабельной и умной
+                    if (cfg.isDelete) {
+                        cfg.el.style.pointerEvents = 'auto';
+                        cfg.el.style.opacity = '1';
+                        
+                        cfg.el.onclick = (e) => {
+                            e.stopPropagation();
+                            // Если кнопка удаления спрятана внутри неактивного меню редактирования,
+                            // сначала эмулируем клик по edit, а затем мгновенно жмем delete
+                            if (btnEdit) {
+                                btnEdit.click();
+                                setTimeout(() => {
+                                    if (btnDelete) btnDelete.click();
+                                }, 30);
+                            } else if (btnDelete) {
+                                btnDelete.click();
+                            }
+                        };
+                    }
 
                     terminalBar.appendChild(cfg.el);
                 }
