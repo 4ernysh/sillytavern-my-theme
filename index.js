@@ -83,9 +83,8 @@
        ЛОГИКА ТЕМЫ ИНДЕКС 0 (Red cybercore)
        ========================================== */
     function initRedCybercoreLogic() {
-        console.log('[Red Cybercore] Initializing pure CSS order layout & native delete fix...');
+        console.log('[Red Cybercore] Initializing CSS order layout with copy & anti-ellipsis fix...');
 
-        // Инъецируем стили для управления порядком кнопок и текстом через CSS Flexbox
         if (!document.getElementById('ernysh_cybercore_styles')) {
             const style = document.createElement('style');
             style.id = 'ernysh_cybercore_styles';
@@ -98,10 +97,11 @@
                     gap: 6px;
                 }
                 
-                /* Делаем все кнопки видимыми и кликабельными */
+                /* Принудительно показываем все кнопки и убираем скрытие под троеточие */
                 .ch_name .mes_hide,
                 .ch_name .mes_create_bookmark,
                 .ch_name .mes_create_branch,
+                .ch_name .mes_copy,
                 .ch_name .mes_edit_delete,
                 .ch_name .mes_edit,
                 .ch_name .mes_stmb_start,
@@ -112,19 +112,27 @@
                     opacity: 1 !important;
                 }
 
-                /* Задаем порядок элементов через CSS order */
+                /* Убираем элемент троеточия/меню если оно создается автоматически */
+                .ch_name .mes_extra_buttons_wrapper,
+                .ch_name .extra_buttons {
+                    display: none !important;
+                }
+
+                /* Задаем четкий порядок элементов через CSS order */
                 .ch_name .mes_hide { order: 1; }
                 .ch_name .mes_create_bookmark { order: 2; }
                 .ch_name .mes_create_branch { order: 3; }
-                .ch_name .mes_edit_delete { order: 4; }
-                .ch_name .mes_edit { order: 5; }
-                .ch_name .mes_stmb_start { order: 6; }
-                .ch_name .mes_stmb_end { order: 7; }
+                .ch_name .mes_copy { order: 4; }
+                .ch_name .mes_edit_delete { order: 5; }
+                .ch_name .mes_edit { order: 6; }
+                .ch_name .mes_stmb_start { order: 7; }
+                .ch_name .mes_stmb_end { order: 8; }
 
-                /* Добавляем терминальный текст к кнопкам */
+                /* Добавляем терминальный текст ко всем кнопкам */
                 .ch_name .mes_hide::after { content: ' hide'; font-family: monospace; font-size: 10px; margin-left: 3px; }
                 .ch_name .mes_create_bookmark::after { content: ' check'; font-family: monospace; font-size: 10px; margin-left: 3px; }
                 .ch_name .mes_create_branch::after { content: ' tree'; font-family: monospace; font-size: 10px; margin-left: 3px; }
+                .ch_name .mes_copy::after { content: ' copy'; font-family: monospace; font-size: 10px; margin-left: 3px; }
                 .ch_name .mes_edit_delete::after { content: ' delete'; font-family: monospace; font-size: 10px; margin-left: 3px; }
                 .ch_name .mes_edit::after { content: ' edit'; font-family: monospace; font-size: 10px; margin-left: 3px; }
             `;
