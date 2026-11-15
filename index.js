@@ -83,7 +83,7 @@
        ЛОГИКА ТЕМЫ ИНДЕКС 0 (Red cybercore)
        ========================================== */
     function initRedCybercoreLogic() {
-        console.log('[Red Cybercore] Initializing CSS order layout with copy & anti-ellipsis fix...');
+        console.log('[Red Cybercore] Initializing clean CSS layout without parser errors...');
 
         if (!document.getElementById('ernysh_cybercore_styles')) {
             const style = document.createElement('style');
@@ -97,7 +97,7 @@
                     gap: 6px;
                 }
                 
-                /* Принудительно показываем все кнопки и убираем скрытие под троеточие */
+                /* Принудительно показываем все кнопки */
                 .ch_name .mes_hide,
                 .ch_name .mes_create_bookmark,
                 .ch_name .mes_create_branch,
@@ -112,13 +112,13 @@
                     opacity: 1 !important;
                 }
 
-                /* Убираем элемент троеточия/меню если оно создается автоматически */
+                /* Скрываем старые обертки меню с троеточием */
                 .ch_name .mes_extra_buttons_wrapper,
                 .ch_name .extra_buttons {
                     display: none !important;
                 }
 
-                /* Задаем четкий порядок элементов через CSS order */
+                /* Порядок кнопок через CSS order */
                 .ch_name .mes_hide { order: 1; }
                 .ch_name .mes_create_bookmark { order: 2; }
                 .ch_name .mes_create_branch { order: 3; }
@@ -128,7 +128,7 @@
                 .ch_name .mes_stmb_start { order: 7; }
                 .ch_name .mes_stmb_end { order: 8; }
 
-                /* Добавляем терминальный текст ко всем кнопкам */
+                /* Терминальный текст */
                 .ch_name .mes_hide::after { content: ' hide'; font-family: monospace; font-size: 10px; margin-left: 3px; }
                 .ch_name .mes_create_bookmark::after { content: ' check'; font-family: monospace; font-size: 10px; margin-left: 3px; }
                 .ch_name .mes_create_branch::after { content: ' tree'; font-family: monospace; font-size: 10px; margin-left: 3px; }
