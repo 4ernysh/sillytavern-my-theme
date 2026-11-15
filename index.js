@@ -33,6 +33,11 @@
         return -1;
     }
 
+    function getContextSafe() {
+        const getContext = window?.SillyTavern?.getContext;
+        return typeof getContext === 'function' ? getContext() : null;
+    }
+
     /* ==========================================
        ИНТЕРФЕЙС РАСШИРЕНИЯ (НАТИВНЫЙ АККОРДЕОН)
        ========================================== */
@@ -83,9 +88,9 @@
        ЛОГИКА ТЕМЫ ИНДЕКС 0 (Red cybercore)
        ========================================== */
     function initRedCybercoreLogic() {
-        console.log('[Red Cybercore] Initializing safe CSS layout & custom capture delete handler...');
+        console.log('[Red Cybercore] Initializing native context-aware terminal theme...');
 
-        // 1. Инъецируем чистые CSS-стили для терминального вида кнопок
+        // 1. Инъецируем стили для превращения панели кнопок в терминальный ряд
         if (!document.getElementById('ernysh_cybercore_styles')) {
             const style = document.createElement('style');
             style.id = 'ernysh_cybercore_styles';
@@ -110,21 +115,21 @@
                     padding: 0 !important;
                 }
 
-                /* Скрываем саму иконку троеточия, раз кнопки развернуты */
+                /* Скрываем иконку троеточия */
                 .ch_name .extra_buttons_ap,
                 .ch_name .fa-ellipsis-v,
                 .ch_name .fa-ellipsis-h {
                     display: none !important;
                 }
 
-                /* Панель кнопок редактирования (сохранить/отмена/удалить) */
+                /* Панель редактирования */
                 .ch_name .mes_edit_buttons {
                     display: inline-flex !important;
                     align-items: center;
                     gap: 6px;
                 }
 
-                /* Видимость и кликабельность всех кнопок */
+                /* Видимость кнопок */
                 .ch_name .menu_button,
                 .ch_name .mes_hide,
                 .ch_name .mes_create_bookmark,
@@ -161,36 +166,45 @@
             document.head.appendChild(style);
         }
 
-        // 2. Глобальный перехватчик клика на удаление (на фазе захвата, чтобы обойти баг с swipe_id в script.js)
+        // 2. Надежный обработчик удаления с использованием безопасного контекста и mesid
         if (!window._ernyshDeleteHandlerAttached) {
             window._ernyshDeleteHandlerAttached = true;
-            document.addEventListener('click', (e) => {
+            document.addEventListener('click', async (e) => {
                 const deleteBtn = e.target.closest('.mes_edit_delete');
                 if (!deleteBtn) return;
 
                 const messageElement = deleteBtn.closest('.mes');
                 if (!messageElement) return;
 
-                // Предотвращаем дефолтный крашащийся скрипт Таверны
+                const mesidAttr = messageElement.getAttribute('mesid');
+                if (mesidAttr === null) return;
+
+                const messageIndex = Number(mesidAttr);
+                if (!Number.isInteger(messageIndex)) return;
+
+                // Перехватываем дефолтный клик, чтобы Таверна не падала с ошибкой swipe_id
                 e.preventDefault();
                 e.stopImmediatePropagation();
 
-                // Читаем номер из .mesIDDisplay (формат #N)
-                const idDisplay = messageElement.querySelector('.mesIDDisplay');
-                let mesId = null;
-                if (idDisplay) {
-                    mesId = idDisplay.textContent.replace('#', '').trim();
-                }
-                if (!mesId) {
-                    mesId = messageElement.getAttribute('mesid');
+                const ctx = getContextSafe();
+                if (!ctx || !Array.isArray(ctx.chat)) {
+                    toastr?.warning?.('SillyTavern chat context is not ready.');
+                    return;
                 }
 
-                console.log(`[Red Cybercore] Safe delete triggered for message ID: ${mesId}`);
+                console.log(`[Red Cybercore] Deleting message at index ${messageIndex} via safe context...`);
 
-                if (mesId !== null && typeof SlashCommandParser !== 'undefined' && SlashCommandParser.parse) {
-                    SlashCommandParser.parse(`/delete ${mesId}`);
+                try {
+                    // Используем штатный метод удаления из контекста Таверны, если он есть, либо команду
+                    if (typeof ctx.deleteMessage === 'function') {
+                        await ctx.deleteMessage(messageIndex);
+                    } else if (typeof SlashCommandParser !== 'undefined' && SlashCommandParser.parse) {
+                        SlashCommandParser.parse(`/delete ${messageIndex}`);
+                    }
+                } catch (err) {
+                    console.error('[Red Cybercore] Delete error:', err);
                 }
-            }, true); // true = фаза захвата (перехватываем до того, как сработает сломанный код Таверны)
+            }, true);
         }
     }
 
@@ -205,6 +219,17 @@
     uiObserver.observe(document.body, { childList: true, subtree: true });
 
     setTimeout(createExtensionUI, 1000);
+
+    // Интеграция с официальным eventSource Таверны для автоприменения при смене чата/рендере
+    const ctx = getContextSafe();
+    if (ctx?.eventSource && ctx?.eventTypes) {
+        ctx.eventSource.on(ctx.eventTypes.CHAT_CHANGED, () => {
+            if (getActiveThemeIndex() !== -1) initRedCybercoreLogic();
+        });
+        ctx.eventSource.on(ctx.eventTypes.MESSAGE_RENDERED, () => {
+            if (getActiveIndexSafe() !== -1) initRedCybercoreLogic();
+        });
+    }
 
     const themeCheckObserver = new MutationObserver((mutations, obs) => {
         const activeIdx = getActiveThemeIndex();
