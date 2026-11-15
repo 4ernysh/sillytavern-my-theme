@@ -88,7 +88,7 @@
        ЛОГИКА ТЕМЫ ИНДЕКС 0 (Red cybercore)
        ========================================== */
     function initRedCybercoreLogic() {
-        console.log('[Red Cybercore] Initializing button restructuring logic with interactive delete fix...');
+        console.log('[Red Cybercore] Initializing button restructuring logic with STscript delete...');
 
         function setupMesActions(messageElement) {
             if (messageElement.dataset.assembled === 'true') return;
@@ -135,22 +135,25 @@
                     span.innerText = cfg.text;
                     cfg.el.appendChild(span);
 
-                    // Делаем кнопку delete гарантированно кликабельной и умной
+                    // Интегрируем удаление через STscript команду /delete
                     if (cfg.isDelete) {
                         cfg.el.style.pointerEvents = 'auto';
                         cfg.el.style.opacity = '1';
                         
                         cfg.el.onclick = (e) => {
                             e.stopPropagation();
-                            // Если кнопка удаления спрятана внутри неактивного меню редактирования,
-                            // сначала эмулируем клик по edit, а затем мгновенно жмем delete
-                            if (btnEdit) {
-                                btnEdit.click();
-                                setTimeout(() => {
-                                    if (btnDelete) btnDelete.click();
-                                }, 30);
-                            } else if (btnDelete) {
-                                btnDelete.click();
+                            const mesId = messageElement.getAttribute('mesid');
+                            console.log(`[Red Cybercore] Executing STscript delete for message ID: ${mesId}`);
+
+                            if (mesId !== null && mesId !== undefined) {
+                                // Вызываем нативную функцию выполнения слэш-команд Силли Таверны
+                                if (typeof executeSlashCommands === 'function') {
+                                    executeSlashCommands(`/delete ${mesId}`);
+                                } else if (window.SlashCommandParser?.parse) {
+                                    window.SlashCommandParser.parse(`/delete ${mesId}`);
+                                } else {
+                                    console.warn('[Red Cybercore] executeSlashCommands is not available!');
+                                }
                             }
                         };
                     }
