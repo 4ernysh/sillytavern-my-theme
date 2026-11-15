@@ -88,32 +88,21 @@
        ЛОГИКА ТЕМЫ ИНДЕКС 0 (Red cybercore)
        ========================================== */
     function initRedCybercoreLogic() {
-        console.log('[Red Cybercore] Initializing button restructuring logic with exact selectors...');
+        console.log('[Red Cybercore] Initializing button restructuring logic with verified classes...');
 
         function setupMesActions(messageElement) {
             if (messageElement.dataset.assembled === 'true') return;
 
-            // Ищем элементы по точным путям, которые ты указала:
             const chName = messageElement.querySelector('.ch_name');
             if (!chName) return;
 
-            // 1. Удаление находится в div.mes_edit_buttons div.mes_edit_delete
-            const btnDelete = chName.querySelector('.mes_edit_buttons .mes_edit_delete') || chName.querySelector('.mes_edit_delete');
-            
-            // 2. Редактирование находится в div.mes_buttons div.mes_button
-            const btnEdit = chName.querySelector('.mes_buttons .mes_button') || chName.querySelector('.mes_edit');
-
-            // 3. Остальные кнопки (hide, check, tree, <, >) лежат в div.mes_buttons div.extraMesButtons или раскиданы рядом
-            const extraContainer = chName.querySelector('.mes_buttons .extraMesButtons');
-            
-            // Попробуем выцепить их внутри контейнера или по общим классам Таверны внутри ch_name
             const btnHide = chName.querySelector('.mes_hide');
-            const btnCheck = chName.querySelector('.mes_create_bookmark') || (extraContainer ? extraContainer.querySelector('.fa-bookmark')?.parentElement : null);
-            const btnTree = chName.querySelector('.mes_create_branch') || (extraContainer ? extraContainer.querySelector('.fa-code-branch')?.parentElement : null);
-            const btnPrev = chName.querySelector('.mes_stmb_start') || (extraContainer ? extraContainer.querySelector('.fa-chevron-left')?.parentElement : null);
-            const btnNext = chName.querySelector('.mes_stmb_end') || (extraContainer ? extraContainer.querySelector('.fa-chevron-right')?.parentElement : null);
-
-            console.log('[Red Cybercore Debug] Найдено в сообщении -> delete:', !!btnDelete, '| edit:', !!btnEdit, '| hide:', !!btnHide, '| check:', !!btnCheck, '| tree:', !!btnTree, '| prev:', !!btnPrev, '| next:', !!btnNext);
+            const btnCheck = chName.querySelector('.mes_create_bookmark');
+            const btnTree = chName.querySelector('.mes_create_branch');
+            const btnDelete = chName.querySelector('.mes_edit_delete');
+            const btnEdit = chName.querySelector('.mes_edit');
+            const btnPrev = chName.querySelector('.mes_stmb_start');
+            const btnNext = chName.querySelector('.mes_stmb_end');
 
             const buttonsConfig = [
                 { el: btnHide, text: 'hide' },
@@ -125,7 +114,6 @@
                 { el: btnNext, text: '>' }
             ];
 
-            // Создаем единую терминальную панель для красивого вывода
             let terminalBar = chName.querySelector('.ernysh_terminal_actions');
             if (!terminalBar) {
                 terminalBar = document.createElement('div');
@@ -157,8 +145,6 @@
         window.ernyshForceRescan = function() {
             console.log('[Red Cybercore] Force-rescan triggered!');
             const messages = document.querySelectorAll('.mes');
-            console.log('[Red Cybercore Debug] Количество найденных блоков .mes:', messages.length);
-            
             messages.forEach(messageElement => {
                 delete messageElement.dataset.assembled;
                 setupMesActions(messageElement);
