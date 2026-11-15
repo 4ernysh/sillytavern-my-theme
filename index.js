@@ -152,7 +152,8 @@
         // Сразу обрабатываем все сообщения, которые уже есть на экране
         document.querySelectorAll('.mes').forEach(setupMesActions);
     }
-// Авто-инициализация UI
+
+    // Авто-инициализация UI
     const uiObserver = new MutationObserver((mutations, obs) => {
         const extensionsSettings = document.getElementById('extensions_settings') || document.querySelector('.extensions_settings');
         if (extensionsSettings) {
@@ -169,4 +170,4 @@
     if (activeIndex !== -1 && themesRegistry[activeIndex]) {
         themesRegistry[activeIndex].apply();
     }
-})
+})(); // <-- ВОТ ТУТ ДОЛЖНЫ БЫТЬ СКОБКИ () В КОНЦЕ!
