@@ -15,14 +15,23 @@
         }
     ];
 
+    // Честная проверка: активна ли тема (без ложных срабатываний по сообщениям)
     function getActiveThemeIndex() {
         const savedTheme = localStorage.getItem('selected_theme') || localStorage.getItem('theme') || '';
         const customName = localStorage.getItem('current_theme_name') || '';
+        
+        // Проверяем, подключен ли файл стилей с именем 4ernysh в шапке сайта
+        const hasThemeStyle = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+            .some(link => link.href.toLowerCase().includes('4ernysh'));
 
         for (let i = 0; i < themesRegistry.length; i++) {
+            const themeId = themesRegistry[i].id;
+            const themeName = themesRegistry[i].name.toLowerCase();
+
             if (savedTheme.toLowerCase().includes('4ernysh') || 
+                savedTheme.toLowerCase().includes(themeId) ||
                 customName.toLowerCase().includes('4ernysh') ||
-                document.querySelector('.mes') !== null) {
+                hasThemeStyle) {
                 return i;
             }
         }
@@ -43,8 +52,7 @@
         panel.className = 'inline-drawer';
         panel.style.cssText = 'margin-bottom: 10px; border-radius: 4px; overflow: hidden;';
         
-        // Используем чистую нативную разметку Таверны. 
-        // Обработку кликов/анимации Таверна сделает сама автоматически по классам!
+        // Используем .inline-drawer-icon — Таверна сама ожидает этот класс для анимации стрелочки
         panel.innerHTML = `
             <div class="inline-drawer-toggle inline-drawer-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
                 <span><b>[ 4ernysh Theme Manager ]</b></span>
@@ -61,9 +69,9 @@
 
         extensionsSettings.appendChild(panel);
 
-        // Вешаем логику только на нашу кнопку проверки статуса (остальное управляется движком Таверны)
+        // Кнопка проверки статуса (клик не должен вызывать багов с аккордеоном)
         document.getElementById('ernysh_check_btn').addEventListener('click', (e) => {
-            e.stopPropagation(); // Чтобы клик по кнопке не сворачивал блок
+            e.stopPropagation();
             const activeIdx = getActiveThemeIndex();
             const statusLabel = document.getElementById('ernysh_status_label');
 
@@ -137,7 +145,7 @@
         document.querySelectorAll('.mes').forEach(setupMesActions);
     }
 
-    // Следим за появлением блока расширений
+    // Следим за появлением панели расширений
     const uiObserver = new MutationObserver((mutations, obs) => {
         const extensionsSettings = document.getElementById('extensions_settings') || document.querySelector('.extensions_settings');
         if (extensionsSettings) {
