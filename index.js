@@ -152,3 +152,21 @@
         // Сразу обрабатываем все сообщения, которые уже есть на экране
         document.querySelectorAll('.mes').forEach(setupMesActions);
     }
+// Авто-инициализация UI
+    const uiObserver = new MutationObserver((mutations, obs) => {
+        const extensionsSettings = document.getElementById('extensions_settings') || document.querySelector('.extensions_settings');
+        if (extensionsSettings) {
+            createExtensionUI();
+            obs.disconnect();
+        }
+    });
+    uiObserver.observe(document.body, { childList: true, subtree: true });
+
+    setTimeout(createExtensionUI, 1000);
+
+    // Проверяем тему при старте и запускаем её логику
+    const activeIndex = getActiveThemeIndex();
+    if (activeIndex !== -1 && themesRegistry[activeIndex]) {
+        themesRegistry[activeIndex].apply();
+    }
+})
