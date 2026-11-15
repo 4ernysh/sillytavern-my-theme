@@ -88,9 +88,9 @@
        ЛОГИКА ТЕМЫ ИНДЕКС 0 (Red cybercore)
        ========================================== */
     function initRedCybercoreLogic() {
-        console.log('[Red Cybercore] Initializing universal button harvester...');
+        console.log('[Red Cybercore] Initializing precise and clean button assembler...');
 
-        // Стили для терминальной панели и скрытия старых контейнеров
+        // Стили для терминальной панели и скрытия старых мусорных контейнеров
         if (!document.getElementById('ernysh_cybercore_styles')) {
             const style = document.createElement('style');
             style.id = 'ernysh_cybercore_styles';
@@ -103,19 +103,17 @@
                     margin-top: 4px;
                 }
                 .ernysh_terminal_bar .menu_button,
-                .ernysh_terminal_bar div,
-                .ernysh_terminal_bar span {
+                .ernysh_terminal_bar div {
                     display: inline-flex !important;
                     align-items: center;
                     pointer-events: auto !important;
                     opacity: 1 !important;
                 }
-                /* Прячем старые пустые обертки и меню */
+                /* Прячем старые оригинальные контейнеры с троеточием и кнопками редактирования */
                 .ch_name .extraMesButtons,
-                .ch_name .extra_buttons,
-                .ch_name .mes_extra_buttons_wrapper,
                 .ch_name .mes_edit_buttons,
-                .ch_name .extra_buttons_ap {
+                .ch_name .extra_buttons,
+                .ch_name .mes_extra_buttons_wrapper {
                     display: none !important;
                 }
             `;
@@ -123,6 +121,8 @@
         }
 
         function setupMesActions(messageElement) {
+            if (messageElement.dataset.assembled === 'true') return;
+
             const chName = messageElement.querySelector('.ch_name');
             if (!chName) return;
 
@@ -136,74 +136,55 @@
                 mesButtons.appendChild(terminalBar);
             }
 
-            // Собираем абсолютно все потенциальные элементы кнопок из всех возможных путей в сообщении
-            const rawButtons = messageElement.querySelectorAll(
-                '.mes_buttons .menu_button, .mes_buttons div, .extraMesButtons div, .extraMesButtons button, .mes_edit_buttons div, .mes_edit_buttons button, .mes_edit, .mes_hide, .mes_create_bookmark, .mes_create_branch, .mes_copy, .mes_edit_delete'
-            );
+            // Точечно находим нужные кнопки без захвата системных элементов формы редактирования
+            const btnHide = messageElement.querySelector('.mes_hide, .mes_block');
+            const btnCheck = messageElement.querySelector('.mes_create_bookmark');
+            const btnTree = messageElement.querySelector('.mes_create_branch');
+            const btnCopy = messageElement.querySelector('.mes_copy');
+            const btnDelete = messageElement.querySelector('.mes_edit_delete');
+            const btnEdit = messageElement.querySelector('.ch_name > .mes_edit, .mes_buttons .mes_edit');
+            const btnPrev = messageElement.querySelector('.mes_stmb_start');
+            const btnNext = messageElement.querySelector('.mes_stmb_end');
 
-            rawButtons.forEach(btn => {
-                if (terminalBar.contains(btn) || btn.classList.contains('ernysh_terminal_bar')) return;
+            const buttonsConfig = [
+                { el: btnHide, text: 'hide' },
+                { el: btnCheck, text: 'check' },
+                { el: btnTree, text: 'tree' },
+                { el: btnCopy, text: 'copy' },
+                { el: btnDelete, text: 'delete', isDelete: true },
+                { el: btnEdit, text: 'edit' },
+                { el: btnPrev, text: '<' },
+                { el: btnNext, text: '>' }
+            ];
 
-                let text = '';
-                let isDelete = false;
-                const cls = btn.className || '';
+            buttonsConfig.forEach(cfg => {
+                if (cfg.el && !terminalBar.contains(cfg.el)) {
+                    // Убираем старый текстовый спан, если он остался
+                    const oldText = cfg.el.querySelector('.terminal-btn-text');
+                    if (oldText) oldText.remove();
 
-                // Распознаем тип кнопки по классам или вложенным иконкам FontAwesome
-                if (cls.includes('mes_hide') || cls.includes('mes_block') || btn.querySelector('.fa-eye-slash')) {
-                    text = 'hide';
-                } else if (cls.includes('mes_create_bookmark') || cls.includes('bookmark') || btn.querySelector('.fa-bookmark')) {
-                    text = 'check';
-                } else if (cls.includes('mes_create_branch') || cls.includes('branch') || btn.querySelector('.fa-code-branch')) {
-                    text = 'tree';
-                } else if (cls.includes('mes_copy') || cls.includes('copy') || btn.querySelector('.fa-copy')) {
-                    text = 'copy';
-                } else if (cls.includes('mes_edit_delete') || cls.includes('mes_del') || btn.querySelector('.fa-trash')) {
-                    text = 'delete';
-                    isDelete = true;
-                } else if (cls.includes('mes_edit') || cls.includes('edit') || btn.querySelector('.fa-pen') || btn.querySelector('.fa-pencil')) {
-                    text = 'edit';
-                } else if (cls.includes('mes_stmb_start') || btn.querySelector('.fa-chevron-left')) {
-                    text = '<';
-                } else if (cls.includes('mes_stmb_end') || btn.querySelector('.fa-chevron-right')) {
-                    text = '>';
-                }
+                    const span = document.createElement('span');
+                    span.className = 'terminal-btn-text';
+                    span.style.cssText = 'margin-left: 4px; font-size: 10px; font-family: monospace;';
+                    span.innerText = cfg.text;
+                    cfg.el.appendChild(span);
 
-                if (text) {
-                    // Проверяем, чтобы текст не дублировался при повторном сканировании
-                    if (!btn.querySelector('.terminal-btn-text')) {
-                        const span = document.createElement('span');
-                        span.className = 'terminal-btn-text';
-                        span.style.cssText = 'margin-left: 4px; font-size: 10px; font-family: monospace;';
-                        span.innerText = text;
-                        btn.appendChild(span);
-                    }
+                    cfg.el.style.display = 'inline-flex';
+                    cfg.el.style.opacity = '1';
+                    cfg.el.style.pointerEvents = 'auto';
 
-                    btn.style.display = 'inline-flex';
-                    btn.style.opacity = '1';
-                    btn.style.pointerEvents = 'auto';
-
-                    // Обработка удаления через STscript для мгновенного эффекта
-                    if (isDelete) {
-                        btn.onclick = (e) => {
-                            e.stopPropagation();
-                            const mesId = messageElement.getAttribute('mesid');
-                            if (mesId !== null && typeof SlashCommandParser !== 'undefined' && SlashCommandParser.parse) {
-                                SlashCommandParser.parse(`/delete ${mesId}`);
-                            } else {
-                                btn.click();
-                            }
-                        };
-                    }
-
-                    terminalBar.appendChild(btn);
+                    terminalBar.appendChild(cfg.el);
                 }
             });
+
+            messageElement.dataset.assembled = 'true';
         }
 
         window.ernyshForceRescan = function() {
-            console.log('[Red Cybercore] Universal harvester force-rescan triggered!');
+            console.log('[Red Cybercore] Force-rescan triggered!');
             const messages = document.querySelectorAll('.mes');
             messages.forEach(messageElement => {
+                delete messageElement.dataset.assembled;
                 setupMesActions(messageElement);
             });
         };
