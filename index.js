@@ -102,18 +102,8 @@
             const btnPrev = messageElement.querySelector('.mes_stmb_start');
             const btnNext = messageElement.querySelector('.mes_stmb_end');
 
-            // --- ДЕБАГ ЛОГИ ДЛЯ ПРОВЕРКИ КНОПОК ---
-            console.log('[Red Cybercore Debug] === АНАЛИЗ ПАНЕЛИ СООБЩЕНИЯ ===');
-            console.log('[Red Cybercore Debug] actionsBar HTML:', actionsBar.innerHTML);
-            console.log('[Red Cybercore Debug] btnHide (.mes_hide):', !!btnHide, btnHide);
-            console.log('[Red Cybercore Debug] btnCheck (.mes_create_bookmark):', !!btnCheck, btnCheck);
-            console.log('[Red Cybercore Debug] btnTree (.mes_create_branch):', !!btnTree, btnTree);
-            console.log('[Red Cybercore Debug] btnDelete (.mes_edit_delete):', !!btnDelete, btnDelete);
-            console.log('[Red Cybercore Debug] btnEdit (.mes_edit):', !!btnEdit, btnEdit);
-            console.log('[Red Cybercore Debug] btnPrev (.mes_stmb_start):', !!btnPrev, btnPrev);
-            console.log('[Red Cybercore Debug] btnNext (.mes_stmb_end):', !!btnNext, btnNext);
-            console.log('[Red Cybercore Debug] ================================');
-            // ------------------------------------
+            console.log('[Red Cybercore Debug] Найдена панель:', actionsBar);
+            console.log('[Red Cybercore Debug] Кнопки -> hide:', !!btnHide, '| check:', !!btnCheck, '| tree:', !!btnTree, '| delete:', !!btnDelete, '| edit:', !!btnEdit, '| prev:', !!btnPrev, '| next:', !!btnNext);
 
             const buttonsConfig = [
                 { el: btnHide, text: 'hide' },
@@ -146,7 +136,10 @@
 
         window.ernyshForceRescan = function() {
             console.log('[Red Cybercore] Force-rescan triggered!');
-            document.querySelectorAll('.mes').forEach(messageElement => {
+            const messages = document.querySelectorAll('.mes');
+            console.log('[Red Cybercore Debug] Количество найденных блоков .mes:', messages.length);
+            
+            messages.forEach(messageElement => {
                 const actionsBar = messageElement.querySelector('.mes_actions');
                 if (actionsBar) {
                     delete actionsBar.dataset.assembled;
@@ -167,7 +160,11 @@
         });
 
         observer.observe(document.body, { childList: true, subtree: true });
-        window.ernyshForceRescan();
+        
+        // Делаем небольшую задержку при старте, чтобы чат успел отрендериться
+        setTimeout(() => {
+            window.ernyshForceRescan();
+        }, 500);
     }
 
     // Авто-инициализация UI панели расширений
@@ -182,7 +179,6 @@
 
     setTimeout(createExtensionUI, 1000);
 
-    // Инициализатор темы при появлении #themes
     const themeCheckObserver = new MutationObserver((mutations, obs) => {
         const activeIdx = getActiveThemeIndex();
         if (activeIdx !== -1 && themesRegistry[activeIdx]) {
