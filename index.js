@@ -1,40 +1,10 @@
 (function() {
     'use strict';
 
-    /* ==========================================
-       РЕЕСТР ТЕМ ОТ 4ERNYSH
-       ========================================== */
-    const themesRegistry = [
-        {
-            id: 'red_cybercore',
-            name: '4ernysh Red cybercore theme',
-            apply: function() {
-                initRedCybercoreLogic();
-            }
-        }
-    ];
-
-    function getActiveThemeIndex() {
-        const themeSelect = document.getElementById('themes');
-        if (!themeSelect) return -1;
-
-        const selectedOption = themeSelect.options[themeSelect.selectedIndex];
-        const themeText = selectedOption ? selectedOption.text.toLowerCase() : '';
-        const themeVal = themeSelect.value.toLowerCase();
-
-        for (let i = 0; i < themesRegistry.length; i++) {
-            const themeId = themesRegistry[i].id.toLowerCase();
-
-            if (themeText.includes('4ernysh') || themeText.includes(themeId) ||
-                themeVal.includes('4ernysh') || themeVal.includes(themeId)) {
-                return i;
-            }
-        }
-        return -1;
-    }
+    console.log('[4ernysh Theme Manager] Script loaded successfully!');
 
     /* ==========================================
-       ИНТЕРФЕЙС РАСШИРЕНИЯ (НАТИВНЫЙ АККОРДЕОН)
+       ИНТЕРФЕЙС РАСШИРЕНИЯ (НАДЕЖНЫЙ АККОРДЕОН)
        ========================================== */
     function createExtensionUI() {
         if (document.getElementById('ernysh_theme_manager_settings')) return;
@@ -52,43 +22,47 @@
                 <span><b>[ 4ernysh Theme Manager ]</b></span>
                 <i class="fa-solid fa-chevron-down inline-drawer-icon"></i>
             </div>
-            <div class="inline-drawer-content" style="display: none;">
+            <div class="inline-drawer-content" style="display: none; padding: 10px;">
                 <p style="margin: 0 0 10px 0; font-size: 11px;">Управление темами и скриптами от черныша :3</p>
                 <div style="display: flex; gap: 8px; align-items: center;">
                     <button id="ernysh_check_btn" class="menu_button">Проверить статус!</button>
-                    <span id="ernysh_status_label" style="font-size: 11px;">Статус: не проверено D:</span>
+                    <span id="ernysh_status_label" style="font-size: 11px; color: #52c252;">Статус: Активен (Red cybercore)</span>
                 </div>
             </div>
         `;
 
         extensionsSettings.appendChild(panel);
 
-        document.getElementById('ernysh_check_btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            const activeIdx = getActiveThemeIndex();
-            const statusLabel = document.getElementById('ernysh_status_label');
-
-            if (activeIdx !== -1 && themesRegistry[activeIdx]) {
-                statusLabel.innerText = `АКТИВНА (${themesRegistry[activeIdx].name}) [Индекс: ${activeIdx}]`;
-                statusLabel.style.color = '#52c252';
-
+        const checkBtn = document.getElementById('ernysh_check_btn');
+        if (checkBtn) {
+            checkBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const statusLabel = document.getElementById('ernysh_status_label');
+                if (statusLabel) {
+                    statusLabel.innerText = 'ПЕРЕСКАН ВЫПОЛНЕН!';
+                }
                 if (typeof window.ernyshForceRescan === 'function') {
                     window.ernyshForceRescan();
-                } else {
-                    themesRegistry[activeIdx].apply();
                 }
-            } else {
-                statusLabel.innerText = 'НЕ ВКЛЮЧЕНА (Выбрана другая тема)';
-                statusLabel.style.color = '#c25252';
-            }
-        });
+            });
+        }
     }
 
+    // Постоянный мониторинг DOM для появления панели настроек расширений
+    const uiObserver = new MutationObserver(() => {
+        createExtensionUI();
+    });
+    uiObserver.observe(document.body, { childList: true, subtree: true });
+    
+    // Страховка таймером на случай раннего старта
+    setTimeout(createExtensionUI, 1000);
+    setTimeout(createExtensionUI, 3000);
+
     /* ==========================================
-       ЛОГИКА ТЕМЫ ИНДЕКС 0 (Red cybercore)
+       ЛОГИКА КНОПОК ЧАТА (Red cybercore)
        ========================================== */
     function initRedCybercoreLogic() {
-        console.log('[Red Cybercore] Initializing button restructuring logic with verified classes...');
+        console.log('[Red Cybercore] Initializing button restructuring logic...');
 
         function setupMesActions(messageElement) {
             if (messageElement.dataset.assembled === 'true') return;
@@ -145,6 +119,8 @@
         window.ernyshForceRescan = function() {
             console.log('[Red Cybercore] Force-rescan triggered!');
             const messages = document.querySelectorAll('.mes');
+            console.log('[Red Cybercore Debug] Найдено блоков .mes:', messages.length);
+            
             messages.forEach(messageElement => {
                 delete messageElement.dataset.assembled;
                 setupMesActions(messageElement);
@@ -164,44 +140,13 @@
 
         observer.observe(document.body, { childList: true, subtree: true });
         
-        setTimeout(() => {
-            window.ernyshForceRescan();
-        }, 500);
+        // Запускаем сканирование с задержками, чтобы чат успел отрендериться
+        window.ernyshForceRescan();
+        setTimeout(window.ernyshForceRescan, 600);
+        setTimeout(window.ernyshForceRescan, 1500);
     }
 
-    // Авто-инициализация UI панели расширений
-    const uiObserver = new MutationObserver((mutations, obs) => {
-        const extensionsSettings = document.getElementById('extensions_settings') || document.querySelector('.extensions_settings');
-        if (extensionsSettings) {
-            createExtensionUI();
-            obs.disconnect();
-        }
-    });
-    uiObserver.observe(document.body, { childList: true, subtree: true });
+    // Запускаем логику кнопок сразу при загрузке скрипта
+    initRedCybercoreLogic();
 
-    setTimeout(createExtensionUI, 1000);
-
-    const themeCheckObserver = new MutationObserver((mutations, obs) => {
-        const activeIdx = getActiveThemeIndex();
-        if (activeIdx !== -1 && themesRegistry[activeIdx]) {
-            themesRegistry[activeIdx].apply();
-            obs.disconnect();
-        }
-    });
-    themeCheckObserver.observe(document.body, { childList: true, subtree: true });
-
-    const immediateIdx = getActiveThemeIndex();
-    if (immediateIdx !== -1 && themesRegistry[immediateIdx]) {
-        themesRegistry[immediateIdx].apply();
-        themeCheckObserver.disconnect();
-    }
-
-    document.addEventListener('change', (e) => {
-        if (e.target && e.target.id === 'themes') {
-            const activeIdx = getActiveThemeIndex();
-            if (activeIdx !== -1 && themesRegistry[activeIdx]) {
-                themesRegistry[activeIdx].apply();
-            }
-        }
-    });
 })();
