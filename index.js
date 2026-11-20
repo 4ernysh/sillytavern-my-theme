@@ -51,7 +51,7 @@
         panel.id = 'ernysh_theme_manager_settings';
         panel.className = 'inline-drawer';
         panel.style.cssText = 'margin-bottom: 10px; border-radius: 4px; overflow: hidden;';
-        
+
         panel.innerHTML = `
             <div class="inline-drawer-toggle inline-drawer-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
                 <span><b>[ 4ernysh Theme Manager ]</b></span>
@@ -83,16 +83,69 @@
             }
         });
     }
-       /* ==========================================
+
+    /* ==========================================
        ЛОГИКА ТЕМЫ ИНДЕКС 0 (Red cybercore)
        ========================================== */
     async function initRedCybercoreLogic() {
         console.log('[Red Cybercore] Initializing clean terminal theme & importing external module...');
 
+        function updateVrDatesForAllMessages() {
+            const messages = document.querySelectorAll('#sheld #chat .mes:not([is_user="true"])');
 
-        
+            messages.forEach((mesEl) => {
+                const firstP = mesEl.querySelector('.mes_block .mes_text p');
+                const timestampEl = mesEl.querySelector('.timestamp');
+                if (!timestampEl) return;
+
+                let vrValue = 'Unknown';
+
+                if (firstP) {
+                    const paragraphText = firstP.innerText.trim();
+                    const match = paragraphText.match(/\b(\d{2}\.\d{2}\.\d{4})\b/);
+                    if (match) {
+                        vrValue = `VR: ${match[1]}`;
+                    }
+                }
+
+                let vrTag = mesEl.querySelector('.vr-date-tag');
+
+                if (!vrTag) {
+                    vrTag = document.createElement('span');
+                    vrTag.className = 'vr-date-tag';
+                    timestampEl.after(vrTag);
+                }
+
+                vrTag.textContent = vrValue;
+
+                // Стили прямо из JS (с поддержкой !important через setProperty)
+                const styles = {
+                    'position': 'absolute',
+                    'bottom': '0',
+                    'left': '220px', // подбираешь под свою ширину
+                    'height': '20px',
+                    'line-height': '20px',
+                    'white-space': 'nowrap',
+                    'color': '#c25252',
+                    'font-size': '11px',
+                    'z-index': '2',
+                    'pointer-events': 'none',
+                    'background': 'transparent',
+                    'box-shadow': 'none',
+                    'margin': '0',
+                    'padding': '0'
+                };
+
+                for (const [prop, val] of Object.entries(styles)) {
+                    vrTag.style.setProperty(prop, val, 'important');
+                }
+            });
+        }
+
+        updateVrDatesForAllMessages();
     }
-       // Авто-инициализация UI панели расширений
+
+    // Авто-инициализация UI панели расширений
     const uiObserver = new MutationObserver((mutations, obs) => {
         const extensionsSettings = document.getElementById('extensions_settings') || document.querySelector('.extensions_settings');
         if (extensionsSettings) {
