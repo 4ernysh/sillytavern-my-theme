@@ -90,6 +90,63 @@
     async function initRedCybercoreLogic() {
         console.log('[Red Cybercore] Initializing clean terminal theme & importing external module...');
 
+        const MONTHS_GENITIVE = {
+            'января': '01',
+            'февраля': '02',
+            'марта': '03',
+            'апреля': '04',
+            'мая': '05',
+            'июня': '06',
+            'июля': '07',
+            'августа': '08',
+            'сентября': '09',
+            'октября': '10',
+            'ноября': '11',
+            'декабря': '12',
+        };
+
+        function pad2(n) {
+            return String(n).padStart(2, '0');
+        }
+
+        function formatTimestampText(rawText) {
+            // Ищем: день, месяц в родительном падеже, год, часы:минуты
+            const match = rawText.trim().match(
+                /(\d{1,2})\s+([а-яё]+)\s+(\d{4})\s*(?:г\.?)?\s*(\d{1,2}):(\d{2})/i
+            );
+
+            if (!match) return null;
+
+            const day = pad2(match[1]);
+            const monthName = match[2].toLowerCase();
+            const year = match[3];
+            const hours = pad2(match[4]);
+            const minutes = pad2(match[5]);
+
+            const month = MONTHS_GENITIVE[monthName];
+            if (!month) return null;
+
+            return `${day}.${month}.${year} ${hours}:${minutes}`;
+        }
+
+        function updateTimestamps() {
+            document.querySelectorAll('#sheld #chat .mes .timestamp').forEach((el) => {
+                // Берём только текстовые узлы самого .timestamp, чтобы не затереть вложенные элементы/псевдоэлементы
+                const textNode = Array.from(el.childNodes).find(
+                    (node) => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()
+                );
+
+                if (!textNode) return;
+
+                const formatted = formatTimestampText(textNode.nodeValue);
+                if (formatted) {
+                    textNode.nodeValue = formatted;
+                }
+            });
+        }
+
+        updateTimestamps();
+
         function updateVrDatesForAllMessages() {
             const messages = document.querySelectorAll('#sheld #chat .mes:not([is_user="true"])');
 
@@ -98,7 +155,7 @@
                 const timestampEl = mesEl.querySelector('.timestamp');
                 if (!timestampEl) return;
 
-                let vrValue = 'Unknown';
+                let vrValue = 'VR: Unknown';
 
                 if (firstP) {
                     const paragraphText = firstP.innerText.trim();
@@ -122,11 +179,12 @@
                 const styles = {
                     'position': 'absolute',
                     'bottom': '0',
-                    'left': '220px', // подбираешь под свою ширину
+                    'left': '450px', // подбираешь под свою ширину
                     'height': '20px',
                     'line-height': '20px',
                     'white-space': 'nowrap',
-                    'color': '#c25252',
+                    'font-weight': 'normal',
+                    'color': '#8e3b3c',
                     'font-size': '11px',
                     'z-index': '2',
                     'pointer-events': 'none',
