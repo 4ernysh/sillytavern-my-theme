@@ -179,7 +179,6 @@
                 const styles = {
                     'position': 'absolute',
                     'bottom': '0',
-                    'left': '450px', // подбираешь под свою ширину
                     'height': '20px',
                     'line-height': '20px',
                     'white-space': 'nowrap',
