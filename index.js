@@ -182,7 +182,7 @@
                     'height': '20px',
                     'line-height': '20px',
                     'white-space': 'nowrap',
-                    'font-weight': 'normal',
+                    'font-weight': '400px',
                     'color': '#8e3b3c',
                     'font-size': '11px',
                     'z-index': '2',
